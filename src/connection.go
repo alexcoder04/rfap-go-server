@@ -55,15 +55,24 @@ func HanleConnection(conn net.Conn) {
 
 	commandInt := binary.BigEndian.Uint32(command)
 	switch commandInt {
-	case 0:
+	case CMD_PING:
 		log.Println(conn.RemoteAddr().String(), "just ping")
-	case 1:
+	case CMD_DISCONNECT:
+		log.Println(conn.RemoteAddr().String(), "wants to disconnect")
+		conn.Close()
+		return
+	case CMD_INFO:
+		log.Println(conn.RemoteAddr().String(), "wants info")
+		// TODO
+		return
+	case CMD_FILE_READ:
 		h := HeaderValues{}
 		err := yaml.Unmarshal([]byte(header), &h)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
 		log.Println(conn.RemoteAddr().String(), "wants to read", h.FilePath)
+		// TODO FileRead
 		fileContent, fileReadErr := Read(h.FilePath)
 		if fileReadErr != nil {
 			log.Println(fileReadErr.Error())
@@ -75,6 +84,10 @@ func HanleConnection(conn net.Conn) {
 			log.Println(sendErr.Error())
 			return
 		}
+	case CMD_DIRECTORY_READ:
+		// TODO
+		return
+	// TODO optional commands
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
 	}
