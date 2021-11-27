@@ -11,6 +11,7 @@ import (
 )
 
 func HanleConnection(conn net.Conn) {
+	// TODO separate function for receive packet
 	version, err1 := GetVersion(conn)
 	if err1 != nil {
 		conn.Close()
@@ -53,10 +54,12 @@ func HanleConnection(conn net.Conn) {
 	}
 	log.Println("body: 0x" + hex.EncodeToString(body))
 
-	commandInt := binary.BigEndian.Uint32(command)
-	switch commandInt {
+	switch binary.BigEndian.Uint32(command) {
+
+	// server commands
 	case CMD_PING:
 		log.Println(conn.RemoteAddr().String(), "just ping")
+		SendPacket(conn, CMD_PING, "", make([]byte, 0))
 	case CMD_DISCONNECT:
 		log.Println(conn.RemoteAddr().String(), "wants to disconnect")
 		conn.Close()
@@ -65,14 +68,17 @@ func HanleConnection(conn net.Conn) {
 		log.Println(conn.RemoteAddr().String(), "wants info")
 		// TODO
 		return
+
+	// file commands
 	case CMD_FILE_READ:
 		h := HeaderValues{}
+		// TODO header decoding in separate function in separate file
 		err := yaml.Unmarshal([]byte(header), &h)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
 		log.Println(conn.RemoteAddr().String(), "wants to read", h.FilePath)
-		// TODO FileRead
+		// TODO FileRead not generic Read
 		fileContent, fileReadErr := Read(h.FilePath)
 		if fileReadErr != nil {
 			log.Println(fileReadErr.Error())
@@ -84,13 +90,19 @@ func HanleConnection(conn net.Conn) {
 			log.Println(sendErr.Error())
 			return
 		}
+	// TODO optional file commands
+
+	// directory commands
 	case CMD_DIRECTORY_READ:
 		// TODO
 		return
-	// TODO optional commands
+	// TODO optional directory commands
+
+	// unknown command
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
 	}
 
+	// TODO not close but listen
 	conn.Close()
 }
