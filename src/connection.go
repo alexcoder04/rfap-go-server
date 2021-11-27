@@ -1,99 +1,78 @@
 package main
 
 import (
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
 func HanleConnection(conn net.Conn) {
-	// TODO separate function for receive packet
-	version, err1 := GetVersion(conn)
-	if err1 != nil {
+	_, command, header, _, err := RecvPacket(conn)
+	if err != nil {
+		log.Println(err.Error())
 		conn.Close()
-		log.Println(err1.Error())
 		return
 	}
-	log.Println("version: 0x" + hex.EncodeToString(version))
 
-	headerLength, err2 := GetContentLength(conn)
-	if err2 != nil {
-		conn.Close()
-		log.Println(err2.Error())
-		return
-	}
-	log.Println("header length: ", headerLength)
-
-	command, header, headerChecksum, err3 := GetHeader(conn, headerLength)
-	if err3 != nil {
-		conn.Close()
-		log.Println(err3.Error())
-		return
-	}
-	log.Println("command: 0x" + hex.EncodeToString(command))
-	log.Println("header: ", header)
-	log.Println("header checksum: 0x" + hex.EncodeToString(headerChecksum))
-
-	bodyLength, err4 := GetContentLength(conn)
-	if err4 != nil {
-		conn.Close()
-		log.Println(err4.Error())
-		return
-	}
-	log.Println("body length: ", bodyLength)
-
-	body, err5 := GetBody(conn, bodyLength)
-	if err5 != nil {
-		conn.Close()
-		log.Println(err5.Error())
-		return
-	}
-	log.Println("body: 0x" + hex.EncodeToString(body))
-
-	switch binary.BigEndian.Uint32(command) {
+	switch command {
 
 	// server commands
 	case CMD_PING:
 		log.Println(conn.RemoteAddr().String(), "just ping")
-		SendPacket(conn, CMD_PING, "", make([]byte, 0))
+		SendPacket(conn, CMD_PING, HeaderValues{}, make([]byte, 0))
+		break
+
 	case CMD_DISCONNECT:
 		log.Println(conn.RemoteAddr().String(), "wants to disconnect")
 		conn.Close()
 		return
+
 	case CMD_INFO:
 		log.Println(conn.RemoteAddr().String(), "wants info")
-		// TODO
-		return
+		// TODO header.Path could be not defined
+		data, err := Info(header.Path)
+		if err != nil {
+			log.Println(err.Error())
+			conn.Close()
+			return
+		}
+		SendPacket(conn, CMD_INFO + 2, data, make([]byte, 0))
+		break
+	
+	case CMD_ERROR:
+		// TODO what if the client sends us an error?
+		break
 
 	// file commands
 	case CMD_FILE_READ:
-		h := HeaderValues{}
-		// TODO header decoding in separate function in separate file
-		err := yaml.Unmarshal([]byte(header), &h)
+		log.Println(conn.RemoteAddr().String(), "wants to read", header.Path)
+		// TODO header.Path could be not defined
+		metadata := HeaderValues{}
+		metadata.Path = header.Path
+		metadata.Type = 'f'
+		content, err := ReadFile(header.Path)
 		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
-		log.Println(conn.RemoteAddr().String(), "wants to read", h.FilePath)
-		// TODO FileRead not generic Read
-		fileContent, fileReadErr := Read(h.FilePath)
-		if fileReadErr != nil {
-			log.Println(fileReadErr.Error())
+			if os.IsNotExist(err) {
+				metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
+				metadata.ErrorMessage = "File does not exist"
+			} else {
+				metadata.ErrorCode = ERROR_UNKNOWN
+				metadata.ErrorMessage = "Unknown error while reading file"
+			}
+			SendPacket(conn, CMD_FILE_READ + 2, metadata, make([]byte, 0))
 			return
 		}
-		fmt.Println(string(fileContent))
-		sendErr := SendPacket(conn, 5, "FilePath: "+h.FilePath, fileContent)
-		if sendErr != nil {
-			log.Println(sendErr.Error())
-			return
+		SendPacket(conn, CMD_FILE_READ + 2, metadata, content)
+		break
 		}
 	// TODO optional file commands
 
 	// directory commands
 	case CMD_DIRECTORY_READ:
+		log.Println(conn.RemoteAddr().String(), "wants to read a directory")
 		// TODO
 		return
 	// TODO optional directory commands
@@ -101,8 +80,12 @@ func HanleConnection(conn net.Conn) {
 	// unknown command
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
+		metadata := HeaderValues{}
+		metadata.ErrorCode = ERROR_INVALID_COMMAND
+		metadata.ErrorMessage = "Unknown command requested"
+		SendPacket(conn, CMD_ERROR + 2, metadata, make([]byte, 0))
+		break
 	}
 
-	// TODO not close but listen
-	conn.Close()
+	HanleConnection(conn)
 }

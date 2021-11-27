@@ -10,13 +10,9 @@ const (
 	connHost        = "localhost"
 	connPort        = "6700"
 	connType        = "tcp"
-	publicFolder    = "/tmp/rfap-share"
-	protocolVersion = 1
+	PublicFolder    = "/tmp/rfap-share"
+	ProtocolVersion = 1
 )
-
-type HeaderValues struct {
-	FilePath string `yaml:"FilePath"`
-}
 
 func main() {
 	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)

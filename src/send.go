@@ -3,14 +3,19 @@ package main
 import (
 	"encoding/binary"
 	"net"
+
+	"gopkg.in/yaml.v3"
 )
 
-func SendPacket(conn net.Conn, command int, metadata string, body []byte) error {
+func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) error {
 	version := make([]byte, 2)
 	binary.BigEndian.PutUint16(version, protocolVersion)
 	conn.Write(version)
 
-	metadataBytes := []byte(metadata)
+	metadataBytes, err := yaml.Marshal(metadata)
+	if err != nil {
+		return err
+	}
 
 	headerLength := uint32(4 + len(metadataBytes) + 32)
 	headerLengthBytes := make([]byte, 4)
