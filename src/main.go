@@ -10,7 +10,7 @@ const (
 	connHost        = "localhost"
 	connPort        = "6700"
 	connType        = "tcp"
-	PublicFolder    = "/tmp/rfap-share"
+	PublicFolder    = "./shared"
 	ProtocolVersion = 1
 )
 

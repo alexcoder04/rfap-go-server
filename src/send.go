@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"encoding/hex"
-	"fmt"
 	"log"
 	"net"
 
@@ -14,48 +12,44 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	// version
 	version := make([]byte, 2)
 	binary.BigEndian.PutUint16(version, ProtocolVersion)
-	conn.Write(version)
 
 	// header encode
 	metadataBytes, err := yaml.Marshal(&metadata)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(metadataBytes))
 
-	// header length send
-	fmt.Println("header length", len(metadataBytes))
+	// header length
 	headerLength := uint32(4 + len(metadataBytes) + 32)
-	headerLengthBytes := make([]byte, 4)
+	headerLengthBytes := make([]byte, 3)
 	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
-	fmt.Println("head len bin", hex.EncodeToString(headerLengthBytes))
-	conn.Write(headerLengthBytes)
 
-	// command send
+	// command
 	commandBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(commandBytes, uint32(command))
-	conn.Write(commandBytes)
 
-	// header send
-	conn.Write(metadataBytes)
-
-	// checksum send
+	// checksum
 	checksum := make([]byte, 32)
 	for i := 0; i < 32; i++ {
 		checksum[i] = 0
 	}
-	conn.Write(checksum)
 
 	// body length send
 	bodyLength := len(body) + 32
-	fmt.Println("send body length", bodyLength)
-	bodyLengthBytes := make([]byte, 4)
+	bodyLengthBytes := make([]byte, 3)
 	binary.BigEndian.PutUint32(bodyLengthBytes, uint32(bodyLength))
-	conn.Write(bodyLengthBytes)
 
-	// body send
+	// send everything
+	// TODO put everything into one array
+	conn.Write(version)
+	conn.Write(headerLengthBytes)
+	conn.Write(commandBytes)
+	conn.Write(metadataBytes)
+	conn.Write(checksum)
+	conn.Write(bodyLengthBytes)
 	conn.Write(body)
 	conn.Write(checksum)
+
 	log.Println("sent packet to", conn.RemoteAddr().String())
 
 	return nil
