@@ -29,9 +29,9 @@ func HanleConnection(conn net.Conn) {
 		return
 
 	case CMD_INFO:
-		log.Println(conn.RemoteAddr().String(), "wants info")
 		// TODO header.Path could be not defined
 		data, err := Info(header.Path)
+		log.Println(conn.RemoteAddr().String(), "wants info on", header.Path)
 		if err != nil {
 			log.Println(err.Error())
 			SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))

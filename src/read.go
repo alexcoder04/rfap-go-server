@@ -3,11 +3,13 @@ package main
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
 func Info(originalPath string) (HeaderValues, error) {
 	path := PublicFolder + originalPath
+	log.Println("reading info on", originalPath, "=", path)
 
 	h := HeaderValues{}
 

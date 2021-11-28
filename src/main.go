@@ -10,7 +10,6 @@ const (
 	connHost        = "localhost"
 	connPort        = "6700"
 	connType        = "tcp"
-	PublicFolder    = "./shared"
 	ProtocolVersion = 1
 )
 
