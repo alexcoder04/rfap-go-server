@@ -67,7 +67,7 @@ func HanleConnection(conn net.Conn) {
 		}
 		SendPacket(conn, CMD_FILE_READ + 2, metadata, content)
 		break
-		}
+		
 	// TODO optional file commands
 
 	// directory commands
@@ -76,7 +76,7 @@ func HanleConnection(conn net.Conn) {
 		// TODO
 		return
 	// TODO optional directory commands
-
+	
 	// unknown command
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
