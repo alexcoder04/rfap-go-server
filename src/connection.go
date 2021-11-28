@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-
 	// "gopkg.in/yaml.v3"
 )
 
@@ -39,9 +38,9 @@ func HanleConnection(conn net.Conn) {
 			conn.Close()
 			return
 		}
-		SendPacket(conn, CMD_INFO + 2, data, make([]byte, 0))
+		SendPacket(conn, CMD_INFO+2, data, make([]byte, 0))
 		break
-	
+
 	case CMD_ERROR:
 		// TODO what if the client sends us an error?
 		break
@@ -62,12 +61,12 @@ func HanleConnection(conn net.Conn) {
 				metadata.ErrorCode = ERROR_UNKNOWN
 				metadata.ErrorMessage = "Unknown error while reading file"
 			}
-			SendPacket(conn, CMD_FILE_READ + 2, metadata, make([]byte, 0))
+			SendPacket(conn, CMD_FILE_READ+2, metadata, make([]byte, 0))
 			return
 		}
-		SendPacket(conn, CMD_FILE_READ + 2, metadata, content)
+		SendPacket(conn, CMD_FILE_READ+2, metadata, content)
 		break
-		
+
 	// TODO optional file commands
 
 	// directory commands
@@ -76,14 +75,14 @@ func HanleConnection(conn net.Conn) {
 		// TODO
 		return
 	// TODO optional directory commands
-	
+
 	// unknown command
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
 		metadata := HeaderValues{}
 		metadata.ErrorCode = ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
-		SendPacket(conn, CMD_ERROR + 2, metadata, make([]byte, 0))
+		SendPacket(conn, CMD_ERROR+2, metadata, make([]byte, 0))
 		break
 	}
 

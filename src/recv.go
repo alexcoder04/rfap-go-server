@@ -34,7 +34,7 @@ func RecvPacket(conn net.Conn) (int, int, HeaderValues, []byte, error) {
 		return 0, 0, HeaderValues{}, make([]byte, 0), errors.New("cannot read header")
 	}
 	log.Println("command: 0x" + hex.EncodeToString(command))
-	log.Println("header: ", headerBytes)
+	log.Println("header: ", hex.EncodeToString(headerBytes))
 	log.Println("header checksum: 0x" + hex.EncodeToString(headerChecksum))
 	header := HeaderValues{}
 	err := yaml.Unmarshal([]byte(headerBytes), &header)
@@ -79,14 +79,14 @@ func GetContentLength(conn net.Conn) (int, error) {
 	return int(binary.BigEndian.Uint32(buffer)), nil
 }
 
-func GetHeader(conn net.Conn, length int) ([]byte, string, []byte, error) {
+func GetHeader(conn net.Conn, length int) ([]byte, []byte, []byte, error) {
 	buffer := make([]byte, length)
 	_, err := conn.Read(buffer[:])
 	if err != nil {
-		return buffer, "", buffer, errors.New("cannot read header")
+		return buffer[:4], buffer[4:(length - 32)], buffer[(length - 32):], errors.New("cannot read header")
 	}
 	command := buffer[:4]
-	header := string(buffer[4:(length - 32)])
+	header := buffer[4:(length - 32)]
 	checksum := buffer[(length - 32):]
 	return command, header, checksum, nil
 }
@@ -97,5 +97,8 @@ func GetBody(conn net.Conn, length int) ([]byte, error) {
 	if err != nil {
 		return buffer, errors.New("cannot read header")
 	}
-	return buffer, nil
+	body := buffer[:(length - 32)]
+	checksum := buffer[(length - 32):]
+	log.Println("body checksum", hex.EncodeToString(checksum))
+	return body, nil
 }
