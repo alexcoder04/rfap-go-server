@@ -9,7 +9,7 @@ import (
 
 func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) error {
 	version := make([]byte, 2)
-	binary.BigEndian.PutUint16(version, protocolVersion)
+	binary.BigEndian.PutUint16(version, ProtocolVersion)
 	conn.Write(version)
 
 	metadataBytes, err := yaml.Marshal(metadata)
