@@ -1,11 +1,9 @@
 package main
 
 import (
-	// "fmt"
 	"log"
 	"net"
 	"os"
-	// "gopkg.in/yaml.v3"
 )
 
 func HanleConnection(conn net.Conn) {

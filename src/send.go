@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -16,15 +17,18 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	conn.Write(version)
 
 	// header encode
-	metadataBytes, err := yaml.Marshal(metadata)
+	metadataBytes, err := yaml.Marshal(&metadata)
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(metadataBytes))
 
 	// header length send
+	fmt.Println("header length", len(metadataBytes))
 	headerLength := uint32(4 + len(metadataBytes) + 32)
 	headerLengthBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
+	fmt.Println("head len bin", hex.EncodeToString(headerLengthBytes))
 	conn.Write(headerLengthBytes)
 
 	// command send

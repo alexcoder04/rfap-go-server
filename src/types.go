@@ -2,7 +2,7 @@ package main
 
 type HeaderValues struct {
 	ErrorCode    int    `yaml:"ErrorCode"`
-	ErrorMessage string `Yaml:"ErrorMessage"`
+	ErrorMessage string `yaml:"ErrorMessage"`
 	Path         string `yaml:"FilePath"`
 	Type         rune   `yaml:"Type"`
 	Modified     int    `yaml:"Modified"`
