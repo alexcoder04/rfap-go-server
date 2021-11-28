@@ -11,6 +11,7 @@ func HanleConnection(conn net.Conn) {
 	if err != nil {
 		log.Println(err.Error())
 		conn.Close()
+		log.Println("closed connection to", conn.RemoteAddr().String())
 		return
 	}
 
@@ -33,8 +34,8 @@ func HanleConnection(conn net.Conn) {
 		data, err := Info(header.Path)
 		if err != nil {
 			log.Println(err.Error())
-			conn.Close()
-			return
+			SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
+			break
 		}
 		SendPacket(conn, CMD_INFO+2, data, make([]byte, 0))
 		break
