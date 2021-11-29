@@ -4,7 +4,7 @@ type HeaderValues struct {
 	ErrorCode    int    `yaml:"ErrorCode"`
 	ErrorMessage string `yaml:"ErrorMessage"`
 	Path         string `yaml:"Path"`
-	Type         rune   `yaml:"Type"`
+	Type         string `yaml:"Type"`
 	Modified     int    `yaml:"Modified"`
 
 	FileSize int    `yaml:"FileSize"`
