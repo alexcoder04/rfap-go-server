@@ -20,9 +20,9 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	}
 
 	// header length
-	headerLength := uint32(4 + len(metadataBytes) + 32)
+	headerLength := 4 + len(metadataBytes) + 32
 	headerLengthBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
+	binary.BigEndian.PutUint32(headerLengthBytes, uint32(headerLength))
 
 	// command
 	commandBytes := make([]byte, 4)
@@ -40,15 +40,8 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	binary.BigEndian.PutUint32(bodyLengthBytes, uint32(bodyLength))
 
 	// send everything
-	// TODO put everything into one array
-	conn.Write(version)
-	conn.Write(headerLengthBytes)
-	conn.Write(commandBytes)
-	conn.Write(metadataBytes)
-	conn.Write(checksum)
-	conn.Write(bodyLengthBytes)
-	conn.Write(body)
-	conn.Write(checksum)
+	result := Concat(version, headerLengthBytes, commandBytes, metadataBytes, checksum, bodyLengthBytes, body)
+	conn.Write(result)
 
 	log.Println("sent packet to", conn.RemoteAddr().String())
 

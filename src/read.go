@@ -28,9 +28,9 @@ func Info(originalPath string) (HeaderValues, error) {
 	h.ErrorCode = 0
 	h.Path = originalPath
 	if stat.IsDir() {
-		h.Type = 'd'
+		h.Type = "d"
 	} else {
-		h.Type = 'f'
+		h.Type = "f"
 	}
 	h.Modified = int(stat.ModTime().Unix())
 

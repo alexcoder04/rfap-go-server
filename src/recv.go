@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/binary"
-	"encoding/hex"
+	//"encoding/hex"
 	"log"
 	"net"
 
@@ -21,29 +21,31 @@ func RecvPacket(conn net.Conn) (int, int, HeaderValues, []byte, error) {
 
 	// sort and split
 	version := binary.BigEndian.Uint16(buffer[:2])
-	log.Println("version:", version)
+	//log.Println("version:", version)
 
 	headerLength := int(binary.BigEndian.Uint32(buffer[2 : 2+4]))
-	log.Println("header length:", headerLength)
+	//log.Println("header length:", headerLength)
 
 	command := binary.BigEndian.Uint32(buffer[2+4 : 2+4+4])
-	log.Println(hex.EncodeToString(buffer[2+4 : 2+4+4]))
-	log.Println("command:", command)
+	//log.Println(hex.EncodeToString(buffer[2+4 : 2+4+4]))
+	//log.Println("command:", command)
 
 	headerRaw := buffer[2+4+4 : 2+4+(headerLength-32)]
-	log.Println("header:", hex.EncodeToString(headerRaw))
+	//log.Println("header:", hex.EncodeToString(headerRaw))
 
 	headerChecksum := buffer[2+4+(headerLength-32) : 2+4+headerLength]
-	log.Println("header checksum:", hex.EncodeToString(headerChecksum))
+	_ = headerChecksum
+	//log.Println("header checksum:", hex.EncodeToString(headerChecksum))
 
 	bodyLength := int(binary.BigEndian.Uint32(buffer[2+4+headerLength : 2+4+headerLength+4]))
-	log.Println("body length:", bodyLength)
+	//log.Println("body length:", bodyLength)
 
 	body := buffer[2+4+headerLength+4 : 2+4+headerLength+4+(bodyLength-32)]
-	log.Println("body:", hex.EncodeToString(body))
+	//log.Println("body:", hex.EncodeToString(body))
 
 	bodyChecksum := buffer[2+4+headerLength+4+(bodyLength-32) : 2+4+headerLength+4+bodyLength]
-	log.Println("body checksum:", hex.EncodeToString(bodyChecksum))
+	_ = bodyChecksum
+	//log.Println("body checksum:", hex.EncodeToString(bodyChecksum))
 
 	// parse
 	header := HeaderValues{}

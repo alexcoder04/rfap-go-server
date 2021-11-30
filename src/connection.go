@@ -50,7 +50,7 @@ func HanleConnection(conn net.Conn) {
 		// TODO header.Path could be not defined
 		metadata := HeaderValues{}
 		metadata.Path = header.Path
-		metadata.Type = 'f'
+		metadata.Type = "f"
 		content, err := ReadFile(header.Path)
 		if err != nil {
 			if os.IsNotExist(err) {
