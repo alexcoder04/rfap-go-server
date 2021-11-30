@@ -14,6 +14,7 @@ const (
 )
 
 func main() {
+	Init()
 	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
 
 	l, err := net.Listen(connType, connHost+":"+connPort)
