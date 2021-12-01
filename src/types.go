@@ -1,6 +1,6 @@
 package main
 
-type HeaderValues struct {
+type HeaderMetadata struct {
 	ErrorCode    int    `yaml:"ErrorCode"`
 	ErrorMessage string `yaml:"ErrorMessage"`
 	Path         string `yaml:"Path"`

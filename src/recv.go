@@ -9,21 +9,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RecvPacket(conn net.Conn) (uint32, uint32, HeaderValues, []byte, error) {
+func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// receive
 	buffer := make([]byte, 2+4+(16*1024*1024)+4+(16*1024*1024))
 	_, err := conn.Read(buffer[:])
 	if err != nil {
 		log.Println(err.Error())
 		conn.Close()
-		return 0, 0, HeaderValues{}, make([]byte, 0), err
+		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 
 	// sort and split
 	version := uint32(binary.BigEndian.Uint16(buffer[:2]))
 	//log.Println("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
-		return 0, 0, HeaderValues{}, make([]byte, 0), err
+		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 
 	headerLength := binary.BigEndian.Uint32(buffer[2 : 2+4])
@@ -50,13 +50,13 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderValues, []byte, error) {
 	//log.Println("body checksum:", hex.EncodeToString(bodyChecksum))
 
 	// parse
-	header := HeaderValues{}
+	header := HeaderMetadata{}
 	yamlErr := yaml.Unmarshal([]byte(headerRaw), &header)
 	if yamlErr != nil {
 		log.Println("error encoding metadata")
 		log.Println(err.Error())
 		conn.Close()
-		return 0, 0, HeaderValues{}, make([]byte, 0), err
+		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 
 	// return

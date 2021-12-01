@@ -22,7 +22,7 @@ func HanleConnection(conn net.Conn) {
 	// server commands
 	case CMD_PING:
 		log.Println(conn.RemoteAddr().String(), "just ping")
-		SendPacket(conn, CMD_PING, HeaderValues{}, make([]byte, 0))
+		SendPacket(conn, CMD_PING, HeaderMetadata{}, make([]byte, 0))
 		break
 
 	case CMD_DISCONNECT:
@@ -31,7 +31,6 @@ func HanleConnection(conn net.Conn) {
 		return
 
 	case CMD_INFO:
-		// TODO header.Path could be not defined
 		data, err := Info(header.Path)
 		log.Println(conn.RemoteAddr().String(), "wants info on", header.Path)
 		if err != nil {
@@ -48,9 +47,9 @@ func HanleConnection(conn net.Conn) {
 
 	// file commands
 	case CMD_FILE_READ:
-		log.Println(conn.RemoteAddr().String(), "wants to read", header.Path)
-		// TODO header.Path could be not defined
-		metadata := HeaderValues{}
+		log.Println(conn.RemoteAddr().String(), "wants to read file", header.Path)
+		metadata := HeaderMetadata{}
+		// TODO set this stuff afterwards
 		metadata.Path = header.Path
 		metadata.Type = "f"
 		content, err := ReadFile(header.Path)
@@ -63,7 +62,7 @@ func HanleConnection(conn net.Conn) {
 				metadata.ErrorMessage = "Unknown error while reading file"
 			}
 			SendPacket(conn, CMD_FILE_READ+1, metadata, make([]byte, 0))
-			return
+			break
 		}
 		SendPacket(conn, CMD_FILE_READ+1, metadata, content)
 		break
@@ -72,15 +71,31 @@ func HanleConnection(conn net.Conn) {
 
 	// directory commands
 	case CMD_DIRECTORY_READ:
-		log.Println(conn.RemoteAddr().String(), "wants to read a directory")
-		// TODO
-		return
+		log.Println(conn.RemoteAddr().String(), "wants to read directory", header.Path)
+		metadata := HeaderMetadata{}
+		// TODO set this stuff afterwards
+		metadata.Path = header.Path
+		metadata.Type = "d"
+		content, err := ReadDirectory(header.Path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
+				metadata.ErrorMessage = "Directory does not exist"
+			} else {
+				metadata.ErrorCode = ERROR_UNKNOWN
+				metadata.ErrorMessage = "Unknown error while reading directory"
+			}
+			SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, make([]byte, 0))
+			break
+		}
+		SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, content)
+		break
 	// TODO optional directory commands
 
 	// unknown command
 	default:
 		log.Println(conn.RemoteAddr().String(), "unknown command")
-		metadata := HeaderValues{}
+		metadata := HeaderMetadata{}
 		metadata.ErrorCode = ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
 		SendPacket(conn, CMD_ERROR+1, metadata, make([]byte, 0))

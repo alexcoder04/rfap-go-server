@@ -7,11 +7,11 @@ import (
 	"os"
 )
 
-func Info(originalPath string) (HeaderValues, error) {
+func Info(originalPath string) (HeaderMetadata, error) {
 	path := PublicFolder + originalPath
 	log.Println("reading info on", originalPath, "=", path)
 
-	h := HeaderValues{}
+	h := HeaderMetadata{}
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -41,19 +41,44 @@ func Info(originalPath string) (HeaderValues, error) {
 func ReadFile(path string) ([]byte, error) {
 	path = PublicFolder + path
 
-	_, err := os.Stat(path)
+	stat, err := os.Stat(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return make([]byte, 0), err
-		}
-		return make([]byte, 0), errors.New("unknown error")
+		return make([]byte, 0), err
 	}
 
-	// TODO it could be a directory
+	if stat.IsDir() {
+		return make([]byte, 0), errors.New("is a directory")
+	}
+
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return make([]byte, 0), err
 	}
 
 	return content, nil
+}
+func ReadDirectory(path string) ([]byte, error) {
+	path = PublicFolder + path
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	if !stat.Mode().IsDir() {
+		return make([]byte, 0), errors.New("is not a directory")
+	}
+
+	filesList, err := ioutil.ReadDir(path)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	var result string
+	for _, file := range filesList {
+		result += "\n" + file.Name()
+	}
+	log.Println(result)
+
+	return []byte(result), nil
 }

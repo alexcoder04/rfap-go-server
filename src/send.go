@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) error {
+func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte) error {
 	// version
 	version := make([]byte, 2)
 	binary.BigEndian.PutUint16(version, RFAP_VERSION)
@@ -40,7 +40,7 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	binary.BigEndian.PutUint32(bodyLengthBytes, bodyLength)
 
 	// send everything
-	result := ConcatBytes(version, headerLengthBytes, commandBytes, metadataBytes, checksum, bodyLengthBytes, body)
+	result := ConcatBytes(version, headerLengthBytes, commandBytes, metadataBytes, checksum, bodyLengthBytes, body, checksum)
 	_, err = conn.Write(result)
 	if err != nil {
 		return err

@@ -1,5 +1,17 @@
 package main
 
+import (
+	"os"
+)
+
+func FileOrDirExists(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func ConcatBytes(arrays ...[]byte) []byte {
 	result := make([]byte, 0)
 	for _, i := range arrays {
