@@ -7,11 +7,12 @@ import (
 )
 
 const (
-	connHost        = "localhost"
-	connPort        = "6700"
-	connType        = "tcp"
-	ProtocolVersion = 1
+	connHost = "localhost"
+	connPort = "6700"
+	connType = "tcp"
 )
+
+var SUPPORTED_RFAP_VERSIONS = []uint32{1}
 
 func main() {
 	Init()

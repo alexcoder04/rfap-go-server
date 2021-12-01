@@ -11,7 +11,7 @@ import (
 func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) error {
 	// version
 	version := make([]byte, 2)
-	binary.BigEndian.PutUint16(version, ProtocolVersion)
+	binary.BigEndian.PutUint16(version, RFAP_VERSION)
 
 	// header encode
 	metadataBytes, err := yaml.Marshal(&metadata)
@@ -20,9 +20,9 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	}
 
 	// header length
-	headerLength := 4 + len(metadataBytes) + 32
+	headerLength := uint32(4 + len(metadataBytes) + 32)
 	headerLengthBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(headerLengthBytes, uint32(headerLength))
+	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
 
 	// command
 	commandBytes := make([]byte, 4)
@@ -35,15 +35,17 @@ func SendPacket(conn net.Conn, command int, metadata HeaderValues, body []byte) 
 	}
 
 	// body length send
-	bodyLength := len(body) + 32
+	bodyLength := uint32(len(body) + 32)
 	bodyLengthBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(bodyLengthBytes, uint32(bodyLength))
+	binary.BigEndian.PutUint32(bodyLengthBytes, bodyLength)
 
 	// send everything
-	result := Concat(version, headerLengthBytes, commandBytes, metadataBytes, checksum, bodyLengthBytes, body)
-	conn.Write(result)
+	result := ConcatBytes(version, headerLengthBytes, commandBytes, metadataBytes, checksum, bodyLengthBytes, body)
+	_, err = conn.Write(result)
+	if err != nil {
+		return err
+	}
 
 	log.Println("sent packet to", conn.RemoteAddr().String())
-
 	return nil
 }

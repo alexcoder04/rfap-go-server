@@ -7,8 +7,10 @@ import (
 )
 
 func HanleConnection(conn net.Conn) {
-	_, command, header, _, err := RecvPacket(conn)
+	version, command, header, body, err := RecvPacket(conn)
+	_, _ = version, body
 	if err != nil {
+		log.Println("error recieving packet from", conn.RemoteAddr().String())
 		log.Println(err.Error())
 		conn.Close()
 		log.Println("closed connection to", conn.RemoteAddr().String())
@@ -37,7 +39,7 @@ func HanleConnection(conn net.Conn) {
 			SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
 			break
 		}
-		SendPacket(conn, CMD_INFO+2, data, make([]byte, 0))
+		SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
 		break
 
 	case CMD_ERROR:
@@ -60,10 +62,10 @@ func HanleConnection(conn net.Conn) {
 				metadata.ErrorCode = ERROR_UNKNOWN
 				metadata.ErrorMessage = "Unknown error while reading file"
 			}
-			SendPacket(conn, CMD_FILE_READ+2, metadata, make([]byte, 0))
+			SendPacket(conn, CMD_FILE_READ+1, metadata, make([]byte, 0))
 			return
 		}
-		SendPacket(conn, CMD_FILE_READ+2, metadata, content)
+		SendPacket(conn, CMD_FILE_READ+1, metadata, content)
 		break
 
 	// TODO optional file commands
@@ -81,7 +83,7 @@ func HanleConnection(conn net.Conn) {
 		metadata := HeaderValues{}
 		metadata.ErrorCode = ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
-		SendPacket(conn, CMD_ERROR+2, metadata, make([]byte, 0))
+		SendPacket(conn, CMD_ERROR+1, metadata, make([]byte, 0))
 		break
 	}
 
