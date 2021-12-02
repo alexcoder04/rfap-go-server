@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 
@@ -30,7 +29,6 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	if stat.IsDir() {
 		metadata.Type = "d"
 		for _, r := range requestDetails {
-			// TODO dos attack if bunch of those sent on big dir?
 			switch r {
 			case "DirectorySize":
 				size, err := CalculateDirSize(path)
@@ -89,7 +87,7 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
 		metadata.ErrorMessage = "Is a directory"
 		metadata.Type = "d"
-		return metadata, make([]byte, 0), errors.New("Is a directory")
+		return metadata, make([]byte, 0), &ErrIsDir{}
 	}
 	metadata.Type = "f"
 	metadata.FileSize = int(stat.Size())
@@ -129,7 +127,7 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 	if !stat.Mode().IsDir() {
 		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
 		metadata.ErrorMessage = "Is not a directory"
-		return metadata, make([]byte, 0), errors.New("is not a directory")
+		return metadata, make([]byte, 0), &ErrIsNotDir{}
 	}
 
 	filesList, err := ioutil.ReadDir(path)

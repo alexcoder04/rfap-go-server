@@ -17,9 +17,20 @@ type HeaderMetadata struct {
 	ElementsNumber int `yaml:"ElementsNumber"`
 }
 
-type UnsupportedRfapVersionError struct {
+type ErrUnsupportedRfapVersion struct{}
+
+func (e *ErrUnsupportedRfapVersion) Error() string {
+	return "Unsupported rfap version"
 }
 
-func (e *UnsupportedRfapVersionError) Error() string {
-	return "Unsupported rfap version"
+type ErrIsDir struct{}
+
+func (e *ErrIsDir) Error() string {
+	return "Is a directory"
+}
+
+type ErrIsNotDir struct{}
+
+func (e *ErrIsNotDir) Error() string {
+	return "Is not a directory"
 }

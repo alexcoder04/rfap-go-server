@@ -9,7 +9,7 @@ func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
 	_ = body
 	if err != nil {
-		if _, ok := err.(*UnsupportedRfapVersionError); ok {
+		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
 			log.Println(conn.RemoteAddr().String(), "rfap version", version, "unsupported")
 			CleanErrorDisconnect(conn)
 			return

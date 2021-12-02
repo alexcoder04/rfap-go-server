@@ -15,8 +15,6 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	buffer := make([]byte, 2+4+(16*1024*1024)+4+(16*1024*1024))
 	_, err := conn.Read(buffer[:])
 	if err != nil {
-		log.Println(err.Error())
-		conn.Close()
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 
@@ -24,7 +22,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	version := uint32(binary.BigEndian.Uint16(buffer[:2]))
 	//log.Println("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
-		return version, 0, HeaderMetadata{}, make([]byte, 0), &UnsupportedRfapVersionError{}
+		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
 	}
 
 	headerLength := binary.BigEndian.Uint32(buffer[2 : 2+4])
@@ -54,10 +52,8 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	header := HeaderMetadata{}
 	err = yaml.Unmarshal([]byte(headerRaw), &header)
 	if err != nil {
-		log.Println("error decoding metadata")
-		log.Println(err.Error())
-		conn.Close()
-		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
+		log.Println("ERROR DECODING METADATA")
+		return version, command, HeaderMetadata{}, body, err
 	}
 
 	// return
