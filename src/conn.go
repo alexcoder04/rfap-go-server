@@ -3,17 +3,19 @@ package main
 import (
 	"log"
 	"net"
-	"os"
 )
 
 func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
-	_, _ = version, body
+	_ = body
 	if err != nil {
-		log.Println("error recieving packet from", conn.RemoteAddr().String())
-		log.Println(err.Error())
-		conn.Close()
-		log.Println("closed connection to", conn.RemoteAddr().String())
+		if _, ok := err.(*UnsupportedRfapVersionError); ok {
+			log.Println(conn.RemoteAddr().String(), "rfap version", version, "unsupported")
+			CleanErrorDisconnect(conn)
+			return
+		}
+		log.Println("error recieving packet from", conn.RemoteAddr().String(), err.Error())
+		CleanErrorDisconnect(conn)
 		return
 	}
 
@@ -22,47 +24,32 @@ func HanleConnection(conn net.Conn) {
 	// server commands
 	case CMD_PING:
 		log.Println(conn.RemoteAddr().String(), "just ping")
-		SendPacket(conn, CMD_PING, HeaderMetadata{}, make([]byte, 0))
+		SendPacket(conn, CMD_PING+1, HeaderMetadata{}, make([]byte, 0))
 		break
 
 	case CMD_DISCONNECT:
 		log.Println(conn.RemoteAddr().String(), "wants to disconnect")
+		SendPacket(conn, CMD_DISCONNECT+1, HeaderMetadata{}, make([]byte, 0))
 		conn.Close()
+		log.Println(conn.RemoteAddr().String() + ": connection closed")
 		return
 
 	case CMD_INFO:
-		data, err := Info(header.Path)
 		log.Println(conn.RemoteAddr().String(), "wants info on", header.Path)
-		if err != nil {
-			log.Println(err.Error())
-			SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
-			break
-		}
+		data := Info(header.Path, header.RequestDetails)
 		SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
 		break
 
 	case CMD_ERROR:
-		// TODO what if the client sends us an error?
+		log.Println(conn.LocalAddr().String(), "sent error code", header.ErrorCode)
 		break
 
 	// file commands
 	case CMD_FILE_READ:
 		log.Println(conn.RemoteAddr().String(), "wants to read file", header.Path)
-		metadata := HeaderMetadata{}
-		// TODO set this stuff afterwards
-		metadata.Path = header.Path
-		metadata.Type = "f"
-		content, err := ReadFile(header.Path)
+		metadata, content, err := ReadFile(header.Path)
 		if err != nil {
-			if os.IsNotExist(err) {
-				metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-				metadata.ErrorMessage = "File does not exist"
-			} else {
-				metadata.ErrorCode = ERROR_UNKNOWN
-				metadata.ErrorMessage = "Unknown error while reading file"
-			}
-			SendPacket(conn, CMD_FILE_READ+1, metadata, make([]byte, 0))
-			break
+			log.Println("error reading file", header.Path, err.Error())
 		}
 		SendPacket(conn, CMD_FILE_READ+1, metadata, content)
 		break
@@ -72,21 +59,9 @@ func HanleConnection(conn net.Conn) {
 	// directory commands
 	case CMD_DIRECTORY_READ:
 		log.Println(conn.RemoteAddr().String(), "wants to read directory", header.Path)
-		metadata := HeaderMetadata{}
-		// TODO set this stuff afterwards
-		metadata.Path = header.Path
-		metadata.Type = "d"
-		content, err := ReadDirectory(header.Path)
+		metadata, content, err := ReadDirectory(header.Path, header.RequestDetails)
 		if err != nil {
-			if os.IsNotExist(err) {
-				metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-				metadata.ErrorMessage = "Directory does not exist"
-			} else {
-				metadata.ErrorCode = ERROR_UNKNOWN
-				metadata.ErrorMessage = "Unknown error while reading directory"
-			}
-			SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, make([]byte, 0))
-			break
+			log.Println("error reading dir", header.Path, err.Error())
 		}
 		SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, content)
 		break

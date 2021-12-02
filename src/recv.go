@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	//"encoding/hex"
+
 	"log"
 	"net"
 
@@ -23,7 +24,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	version := uint32(binary.BigEndian.Uint16(buffer[:2]))
 	//log.Println("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
-		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
+		return version, 0, HeaderMetadata{}, make([]byte, 0), &UnsupportedRfapVersionError{}
 	}
 
 	headerLength := binary.BigEndian.Uint32(buffer[2 : 2+4])
@@ -51,9 +52,9 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 
 	// parse
 	header := HeaderMetadata{}
-	yamlErr := yaml.Unmarshal([]byte(headerRaw), &header)
-	if yamlErr != nil {
-		log.Println("error encoding metadata")
+	err = yaml.Unmarshal([]byte(headerRaw), &header)
+	if err != nil {
+		log.Println("error decoding metadata")
 		log.Println(err.Error())
 		conn.Close()
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"io/ioutil"
 	"os"
 )
 
@@ -10,6 +12,33 @@ func FileOrDirExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func CalculateDirSize(path string) (int, error) {
+	stat, err := os.Stat(path)
+	if err != nil {
+		return 0, err
+	}
+	if !stat.IsDir() {
+		return 0, errors.New("Is not a directory")
+	}
+	var totalSize int
+	filesList, err := ioutil.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+	for _, file := range filesList {
+		if file.IsDir() {
+			thisSize, err := CalculateDirSize(path + "/" + file.Name())
+			if err != nil {
+				return 0, err
+			}
+			totalSize += thisSize
+		} else {
+			totalSize += int(file.Size())
+		}
+	}
+	return totalSize, nil
 }
 
 func ConcatBytes(arrays ...[]byte) []byte {

@@ -3,82 +3,169 @@ package main
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
+
+	"github.com/gabriel-vasile/mimetype"
 )
 
-func Info(originalPath string) (HeaderMetadata, error) {
-	path := PublicFolder + originalPath
-	log.Println("reading info on", originalPath, "=", path)
+func Info(path string, requestDetails []string) HeaderMetadata {
+	metadata := HeaderMetadata{}
+	metadata.Path = path
 
-	h := HeaderMetadata{}
+	path = PublicFolder + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			h.ErrorCode = 1
-			h.ErrorMessage = "File or folder does not exist"
-			return h, errors.New("file or folder does not exist")
+			metadata.ErrorCode = 1
+			metadata.ErrorMessage = "File or folder does not exist"
+		} else {
+			metadata.ErrorCode = 2
+			metadata.ErrorMessage = "Unknown error while stat"
 		}
-		h.ErrorCode = 2
-		h.ErrorMessage = "Unknown error while stat"
-		return h, errors.New("unknown error")
+		return metadata
 	}
 
-	h.ErrorCode = 0
-	h.Path = originalPath
+	metadata.Modified = int(stat.ModTime().Unix())
 	if stat.IsDir() {
-		h.Type = "d"
+		metadata.Type = "d"
+		for _, r := range requestDetails {
+			// TODO dos attack if bunch of those sent on big dir?
+			switch r {
+			case "DirectorySize":
+				size, err := CalculateDirSize(path)
+				if err != nil {
+					metadata.ErrorCode = ERROR_UNKNOWN
+					metadata.ErrorMessage = "Cannot calculate directory size"
+					break
+				}
+				metadata.DirectorySize = size
+				break
+			case "ElementsNumber":
+				filesList, err := ioutil.ReadDir(path)
+				if err != nil {
+					metadata.ErrorCode = ERROR_UNKNOWN
+					metadata.ErrorMessage = "Cannot list directory"
+					break
+				}
+				metadata.ElementsNumber = len(filesList)
+				break
+			}
+		}
 	} else {
-		h.Type = "f"
+		metadata.Type = "f"
+		metadata.FileSize = int(stat.Size())
+		mtype, err := mimetype.DetectFile(path)
+		if err != nil {
+			metadata.FileType = "application/octet-stream"
+		} else {
+			metadata.FileType = mtype.String()
+		}
 	}
-	h.Modified = int(stat.ModTime().Unix())
 
-	// TODO DirectorySize and ElementsNumber
-	return h, nil
+	metadata.ErrorCode = 0
+	return metadata
 }
 
-func ReadFile(path string) ([]byte, error) {
+func ReadFile(path string) (HeaderMetadata, []byte, error) {
+	metadata := HeaderMetadata{}
+	metadata.Path = path
+
 	path = PublicFolder + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
-		return make([]byte, 0), err
+		if os.IsNotExist(err) {
+			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
+			metadata.ErrorMessage = "File or folder does not exist"
+		} else {
+			metadata.ErrorCode = ERROR_UNKNOWN
+			metadata.ErrorMessage = "Unknown error while stat file"
+		}
+		return metadata, make([]byte, 0), err
 	}
 
 	if stat.IsDir() {
-		return make([]byte, 0), errors.New("is a directory")
+		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
+		metadata.ErrorMessage = "Is a directory"
+		metadata.Type = "d"
+		return metadata, make([]byte, 0), errors.New("Is a directory")
 	}
+	metadata.Type = "f"
+	metadata.FileSize = int(stat.Size())
 
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return make([]byte, 0), err
+		metadata.ErrorCode = ERROR_UNKNOWN
+		metadata.ErrorMessage = "Cannot read file"
+		return metadata, make([]byte, 0), err
 	}
 
-	return content, nil
+	mtype := mimetype.Detect(content)
+	metadata.FileType = mtype.String()
+	metadata.ErrorCode = 0
+	metadata.Modified = int(stat.ModTime().Unix())
+	return metadata, content, nil
 }
-func ReadDirectory(path string) ([]byte, error) {
+
+func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte, error) {
+	metadata := HeaderMetadata{}
+	metadata.Path = path
+
 	path = PublicFolder + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
-		return make([]byte, 0), err
+		if os.IsNotExist(err) {
+			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
+			metadata.ErrorMessage = "Folder does not exist"
+		} else {
+			metadata.ErrorCode = ERROR_UNKNOWN
+			metadata.ErrorMessage = "Error while stat"
+		}
+		return metadata, make([]byte, 0), err
 	}
 
 	if !stat.Mode().IsDir() {
-		return make([]byte, 0), errors.New("is not a directory")
+		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
+		metadata.ErrorMessage = "Is not a directory"
+		return metadata, make([]byte, 0), errors.New("is not a directory")
 	}
 
 	filesList, err := ioutil.ReadDir(path)
 	if err != nil {
-		return make([]byte, 0), err
+		metadata.ErrorCode = ERROR_UNKNOWN
+		metadata.ErrorMessage = "Cound not list folder"
+		return metadata, make([]byte, 0), err
 	}
 
 	var result string
 	for _, file := range filesList {
 		result += "\n" + file.Name()
 	}
-	log.Println(result)
 
-	return []byte(result), nil
+	for _, r := range requestDetails {
+		switch r {
+		case "DirectorySize":
+			size, err := CalculateDirSize(path)
+			if err != nil {
+				metadata.ErrorCode = ERROR_UNKNOWN
+				metadata.ErrorMessage = "Cannot calculate directory size"
+				break
+			}
+			metadata.DirectorySize = size
+			break
+		case "ElementsNumber":
+			filesList, err := ioutil.ReadDir(path)
+			if err != nil {
+				metadata.ErrorCode = ERROR_UNKNOWN
+				metadata.ErrorMessage = "Cannot list directory"
+				break
+			}
+			metadata.DirectorySize = len(filesList)
+			break
+		}
+	}
+
+	return metadata, []byte(result), nil
 }
