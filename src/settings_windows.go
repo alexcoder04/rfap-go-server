@@ -2,4 +2,7 @@
 
 package main
 
-const PublicFolder = "./shared"
+const (
+	PublicFolder = "./shared"
+	LOG_FILE     = "./rfap-go-server.log"
+)
