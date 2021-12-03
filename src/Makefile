@@ -13,7 +13,7 @@ windows:
 	GOOS=windows GOARCH=amd64 go build -o $(WINDOWS_OUT)
 
 run:
-	go run .
+	RFAP_MODE=testing RFAP_LOG_LEVEL=trace go run .
 
 clean:
 	rm -f $(LINUX_OUT) $(RASPBERRY_OUT) $(WINDOWS_OUT)

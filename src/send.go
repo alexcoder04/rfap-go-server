@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"net"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,6 +47,8 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 		return err
 	}
 
-	logger.Info(conn.RemoteAddr().String(), " sent packet 0x", hex.EncodeToString(commandBytes))
+	logger.WithFields(logrus.Fields{
+		"client": conn.RemoteAddr().String(),
+	}).Info("sent packet 0x", hex.EncodeToString(commandBytes))
 	return nil
 }

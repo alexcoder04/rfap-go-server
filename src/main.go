@@ -2,6 +2,8 @@ package main
 
 import (
 	"net"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,11 +28,15 @@ func main() {
 	for {
 		c, err := l.Accept()
 		if err != nil {
-			logger.Warning(c.RemoteAddr().String(), " error connecting: ", err.Error())
+			logger.WithFields(logrus.Fields{
+				"client": c.RemoteAddr().String(),
+			}).Warning("error connecting: ", err.Error())
 			c.Close()
 			return
 		}
-		logger.Info(c.RemoteAddr().String(), " connected, starting thread to handle...")
+		logger.WithFields(logrus.Fields{
+			"client": c.RemoteAddr().String(),
+		}).Info("connected, starting thread to handle...")
 
 		go HanleConnection(c)
 	}

@@ -6,6 +6,7 @@ import (
 
 	"net"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,7 +52,9 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	header := HeaderMetadata{}
 	err = yaml.Unmarshal([]byte(headerRaw), &header)
 	if err != nil {
-		logger.Error(conn.RemoteAddr().String(), " error decoding metadata")
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("error decoding metadata")
 		return version, command, HeaderMetadata{}, body, err
 	}
 

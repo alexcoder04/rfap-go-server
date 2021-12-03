@@ -2,14 +2,20 @@ package main
 
 import (
 	"net"
+
+	"github.com/sirupsen/logrus"
 )
 
 func CleanErrorDisconnect(conn net.Conn) {
 	header := HeaderMetadata{}
 	err := SendPacket(conn, CMD_ERROR, header, make([]byte, 0))
 	if err != nil {
-		logger.Error(conn.RemoteAddr().String(), " send disconnect packet failed")
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("send disconnect packet failed")
 	}
 	conn.Close()
-	logger.Info(conn.RemoteAddr().String(), " connection closed")
+	logger.WithFields(logrus.Fields{
+		"client": conn.RemoteAddr().String(),
+	}).Info("connection closed")
 }

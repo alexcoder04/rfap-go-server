@@ -17,7 +17,7 @@ cd rfap-go-server/src
 
 make run # start server
 make linux # compile executable, possible arguments: windows/raspberry
-go install # install executable to $GOPATH/bin
+go install . # install executable to $GOPATH/bin
 ```
 
 ## Related projects
