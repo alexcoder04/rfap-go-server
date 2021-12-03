@@ -16,10 +16,10 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			metadata.ErrorCode = 1
+			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
 			metadata.ErrorMessage = "File or folder does not exist"
 		} else {
-			metadata.ErrorCode = 2
+			metadata.ErrorCode = ERROR_UNKNOWN
 			metadata.ErrorMessage = "Unknown error while stat"
 		}
 		return metadata

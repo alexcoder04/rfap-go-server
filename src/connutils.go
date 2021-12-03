@@ -1,13 +1,15 @@
 package main
 
 import (
-	"log"
 	"net"
 )
 
 func CleanErrorDisconnect(conn net.Conn) {
 	header := HeaderMetadata{}
-	SendPacket(conn, CMD_ERROR, header, make([]byte, 0))
+	err := SendPacket(conn, CMD_ERROR, header, make([]byte, 0))
+	if err != nil {
+		logger.Error(conn.RemoteAddr().String(), " send disconnect packet failed")
+	}
 	conn.Close()
-	log.Println(conn.RemoteAddr().String() + ": connection closed")
+	logger.Info(conn.RemoteAddr().String(), " connection closed")
 }

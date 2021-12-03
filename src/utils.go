@@ -1,18 +1,9 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 )
-
-func FileOrDirExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return true
-}
 
 func CalculateDirSize(path string) (int, error) {
 	stat, err := os.Stat(path)
@@ -20,7 +11,7 @@ func CalculateDirSize(path string) (int, error) {
 		return 0, err
 	}
 	if !stat.IsDir() {
-		return 0, errors.New("Is not a directory")
+		return 0, &ErrIsNotDir{}
 	}
 	var totalSize int
 	filesList, err := ioutil.ReadDir(path)

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/binary"
-	"log"
+	"encoding/hex"
 	"net"
 
 	"gopkg.in/yaml.v3"
@@ -46,6 +46,6 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 		return err
 	}
 
-	log.Println("sent packet to", conn.RemoteAddr().String())
+	logger.Info(conn.RemoteAddr().String(), " sent packet 0x", hex.EncodeToString(commandBytes))
 	return nil
 }

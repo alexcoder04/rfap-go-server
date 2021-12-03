@@ -2,9 +2,8 @@ package main
 
 import (
 	"encoding/binary"
-	//"encoding/hex"
+	"encoding/hex"
 
-	"log"
 	"net"
 
 	"gopkg.in/yaml.v3"
@@ -20,39 +19,39 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 
 	// sort and split
 	version := uint32(binary.BigEndian.Uint16(buffer[:2]))
-	//log.Println("version:", version)
+	logger.Debug("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
 	}
 
 	headerLength := binary.BigEndian.Uint32(buffer[2 : 2+4])
-	//log.Println("header length:", headerLength)
+	logger.Debug("header length:", headerLength)
 
 	command := binary.BigEndian.Uint32(buffer[2+4 : 2+4+4])
-	//log.Println("command:", command)
+	logger.Debug("command:", command)
 
 	headerRaw := buffer[2+4+4 : 2+4+(headerLength-32)]
-	//log.Println("header:", hex.EncodeToString(headerRaw))
+	logger.Debug("header:", hex.EncodeToString(headerRaw))
 
 	headerChecksum := buffer[2+4+(headerLength-32) : 2+4+headerLength]
 	_ = headerChecksum
-	//log.Println("header checksum:", hex.EncodeToString(headerChecksum))
+	logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
 
 	bodyLength := binary.BigEndian.Uint32(buffer[2+4+headerLength : 2+4+headerLength+4])
-	//log.Println("body length:", bodyLength)
+	logger.Debug("body length:", bodyLength)
 
 	body := buffer[2+4+headerLength+4 : 2+4+headerLength+4+(bodyLength-32)]
-	//log.Println("body:", hex.EncodeToString(body))
+	logger.Debug("body:", hex.EncodeToString(body))
 
 	bodyChecksum := buffer[2+4+headerLength+4+(bodyLength-32) : 2+4+headerLength+4+bodyLength]
 	_ = bodyChecksum
-	//log.Println("body checksum:", hex.EncodeToString(bodyChecksum))
+	logger.Debug("body checksum:", hex.EncodeToString(bodyChecksum))
 
 	// parse
 	header := HeaderMetadata{}
 	err = yaml.Unmarshal([]byte(headerRaw), &header)
 	if err != nil {
-		log.Println("ERROR DECODING METADATA")
+		logger.Error(conn.RemoteAddr().String(), " error decoding metadata")
 		return version, command, HeaderMetadata{}, body, err
 	}
 

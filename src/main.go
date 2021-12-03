@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net"
-	"os"
 )
 
 const (
@@ -16,12 +14,11 @@ var SUPPORTED_RFAP_VERSIONS = []uint32{1}
 
 func main() {
 	Init()
-	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
+	logger.Info("Starting " + connType + " server on " + connHost + ":" + connPort)
 
 	l, err := net.Listen(connType, connHost+":"+connPort)
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
-		os.Exit(1)
+		logger.Fatal("Error listening: ", err.Error())
 	}
 
 	defer l.Close()
@@ -29,10 +26,11 @@ func main() {
 	for {
 		c, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error connecting:", err.Error())
+			logger.Warning(c.RemoteAddr().String(), " error connecting: ", err.Error())
+			c.Close()
 			return
 		}
-		fmt.Println("Client " + c.RemoteAddr().String() + " connected.")
+		logger.Info(c.RemoteAddr().String(), " connected, starting thread to handle...")
 
 		go HanleConnection(c)
 	}
