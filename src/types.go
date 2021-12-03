@@ -34,3 +34,15 @@ type ErrIsNotDir struct{}
 func (e *ErrIsNotDir) Error() string {
 	return "Is not a directory"
 }
+
+type ErrSetReadTimeoutFailed struct{}
+
+func (e *ErrSetReadTimeoutFailed) Error() string {
+	return "Failed to set read timeout"
+}
+
+type ErrClientCrashed struct{}
+
+func (e *ErrClientCrashed) Error() string {
+	return "Client crashed"
+}

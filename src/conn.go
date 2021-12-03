@@ -17,6 +17,13 @@ func HanleConnection(conn net.Conn) {
 			CleanErrorDisconnect(conn)
 			return
 		}
+		if _, ok := err.(*ErrClientCrashed); ok {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("client crashed")
+			CleanErrorDisconnect(conn)
+			return
+		}
 		logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Error("error recieving packet: ", err.Error())

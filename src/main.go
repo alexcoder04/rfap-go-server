@@ -6,14 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	connHost = "localhost"
-	connPort = "6700"
-	connType = "tcp"
-)
-
-var SUPPORTED_RFAP_VERSIONS = []uint32{1}
-
 func main() {
 	Init()
 	logger.Info("Starting " + connType + " server on " + connHost + ":" + connPort)

@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/binary"
 	"encoding/hex"
-
 	"net"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -13,8 +13,15 @@ import (
 func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// receive
 	buffer := make([]byte, 2+4+(16*1024*1024)+4+(16*1024*1024))
-	_, err := conn.Read(buffer[:])
+	err := conn.SetReadDeadline(time.Now().Add(CONN_RECV_TIMEOUT_SECS * time.Second))
 	if err != nil {
+		return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrSetReadTimeoutFailed{}
+	}
+	_, err = conn.Read(buffer[:])
+	if err != nil {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrClientCrashed{}
+		}
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 
