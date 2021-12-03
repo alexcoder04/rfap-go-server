@@ -36,7 +36,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	logger.Debug("header length:", headerLength)
 
 	command := binary.BigEndian.Uint32(buffer[2+4 : 2+4+4])
-	logger.Debug("command:", command)
+	logger.Debug("command: 0x" + hex.EncodeToString(buffer[2+4:2+4+4]))
 
 	headerRaw := buffer[2+4+4 : 2+4+(headerLength-32)]
 	logger.Debug("header:", hex.EncodeToString(headerRaw))

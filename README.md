@@ -1,7 +1,9 @@
 
 # rfap-go-server
 
-proof-of-concept file transfer protocol - server side.
+The reference server implementation of the rfap protocol.
+
+See [here](#related-projects) for protocol specifications and related projects.
 
 ## Installation
 
@@ -15,9 +17,9 @@ proof-of-concept file transfer protocol - server side.
 git clone https://github.com/alexcoder04/rfap-go-server
 cd rfap-go-server/src
 
-make run # start server
-make linux # compile executable, possible arguments: windows/raspberry
-go install . # install executable to $GOPATH/bin
+make run     # start testing server
+make linux   # compile executable, other possible arguments: windows/raspberry
+go install . # compile and install executable to $GOPATH/bin
 ```
 
 ## Related projects
