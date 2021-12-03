@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"runtime"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,4 +19,5 @@ func CleanErrorDisconnect(conn net.Conn) {
 	logger.WithFields(logrus.Fields{
 		"client": conn.RemoteAddr().String(),
 	}).Info("connection closed")
+	logger.Info("running threads: ", runtime.NumGoroutine(), "/", MAX_CLIENTS)
 }

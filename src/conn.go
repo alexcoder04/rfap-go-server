@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"runtime"
 
 	"github.com/sirupsen/logrus"
 )
@@ -36,7 +37,8 @@ func HanleConnection(conn net.Conn) {
 	// server commands
 	case CMD_PING:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "ping",
 		}).Info("packet: ping")
 		err := SendPacket(conn, CMD_PING+1, HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
@@ -48,7 +50,8 @@ func HanleConnection(conn net.Conn) {
 
 	case CMD_DISCONNECT:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "disconnect",
 		}).Info("packet: disconnect")
 		err := SendPacket(conn, CMD_DISCONNECT+1, HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
@@ -60,11 +63,13 @@ func HanleConnection(conn net.Conn) {
 		logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Info("connection closed")
+		logger.Info("running threads: ", runtime.NumGoroutine(), "/", MAX_CLIENTS)
 		return
 
 	case CMD_INFO:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "info",
 		}).Info("packet: info on ", header.Path)
 		data := Info(header.Path, header.RequestDetails)
 		err := SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
@@ -77,14 +82,16 @@ func HanleConnection(conn net.Conn) {
 
 	case CMD_ERROR:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "error",
 		}).Warning("packet: error ", header.ErrorCode)
 		break
 
 	// file commands
 	case CMD_FILE_READ:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_read",
 		}).Info("packet: read file ", header.Path)
 		metadata, content, err := ReadFile(header.Path)
 		if err != nil {
@@ -105,7 +112,8 @@ func HanleConnection(conn net.Conn) {
 	// directory commands
 	case CMD_DIRECTORY_READ:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "directory_read",
 		}).Info("packet: read directory ", header.Path)
 		metadata, content, err := ReadDirectory(header.Path, header.RequestDetails)
 		if err != nil {
@@ -125,7 +133,8 @@ func HanleConnection(conn net.Conn) {
 	// unknown command
 	default:
 		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client":  conn.RemoteAddr().String(),
+			"command": "unknown",
 		}).Warning("packet: unknown command")
 		metadata := HeaderMetadata{}
 		metadata.ErrorCode = ERROR_INVALID_COMMAND

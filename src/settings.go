@@ -1,7 +1,10 @@
 package main
 
+import "runtime"
+
 const (
-	CONN_RECV_TIMEOUT_SECS = 65
+	CONN_RECV_TIMEOUT_SECS = 65 // disconnect client if it sleeps for so long
+	MAX_THREADS_WAIT_SECS  = 5  // don't accept new connections for so long if max number reached
 
 	connHost = "localhost"
 	connPort = "6700"
@@ -9,3 +12,5 @@ const (
 )
 
 var SUPPORTED_RFAP_VERSIONS = []uint32{1}
+
+var MAX_CLIENTS = runtime.NumCPU() * 4 // 4 clients per core
