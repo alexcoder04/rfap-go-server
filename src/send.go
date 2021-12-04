@@ -11,7 +11,7 @@ import (
 
 func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte) error {
 	// version
-	version := make([]byte, 2)
+	version := make([]byte, VERSION_LENGTH)
 	binary.BigEndian.PutUint16(version, RFAP_VERSION)
 
 	// header encode
@@ -21,22 +21,22 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	}
 
 	// header length
-	headerLength := uint32(4 + len(metadataBytes) + 32)
+	headerLength := uint32(COMMAND_LENGTH + len(metadataBytes) + CHECKSUM_LENGTH)
 	headerLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
 	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
 
 	// command
-	commandBytes := make([]byte, 4)
+	commandBytes := make([]byte, COMMAND_LENGTH)
 	binary.BigEndian.PutUint32(commandBytes, uint32(command))
 
 	// checksum
-	checksum := make([]byte, 32)
+	checksum := make([]byte, CHECKSUM_LENGTH)
 	for i := 0; i < 32; i++ {
 		checksum[i] = 0
 	}
 
 	// body length send
-	bodyLength := uint32(len(body) + 32)
+	bodyLength := uint32(len(body) + CHECKSUM_LENGTH)
 	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
 	binary.BigEndian.PutUint32(bodyLengthBytes, bodyLength)
 
