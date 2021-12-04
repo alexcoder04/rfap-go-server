@@ -22,7 +22,7 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 
 	// header length
 	headerLength := uint32(4 + len(metadataBytes) + 32)
-	headerLengthBytes := make([]byte, 4)
+	headerLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
 	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
 
 	// command
@@ -37,7 +37,7 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 
 	// body length send
 	bodyLength := uint32(len(body) + 32)
-	bodyLengthBytes := make([]byte, 4)
+	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
 	binary.BigEndian.PutUint32(bodyLengthBytes, bodyLength)
 
 	// send everything

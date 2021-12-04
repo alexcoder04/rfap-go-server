@@ -93,5 +93,5 @@ func CreateSharedFolder() {
 	if err != nil {
 		logger.Fatal("Cannot create shared folder: ", err.Error())
 	}
-	logger.Warning("Created shared folder", PUBLIC_FOLDER)
+	logger.Warning("Created shared folder ", PUBLIC_FOLDER)
 }
