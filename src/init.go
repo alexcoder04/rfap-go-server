@@ -17,7 +17,7 @@ func Init() {
 		InitFileLogger()
 	}
 
-	_, err := os.Stat(PublicFolder)
+	_, err := os.Stat(PUBLIC_FOLDER)
 	if err != nil {
 		if os.IsNotExist(err) {
 			logger.Warning("Shared folder does not exist, creating...")
@@ -89,9 +89,9 @@ func InitFileLogger() {
 }
 
 func CreateSharedFolder() {
-	err := os.MkdirAll(PublicFolder, 0700)
+	err := os.MkdirAll(PUBLIC_FOLDER, 0700)
 	if err != nil {
 		logger.Fatal("Cannot create shared folder: ", err.Error())
 	}
-	logger.Warning("Created shared folder", PublicFolder)
+	logger.Warning("Created shared folder", PUBLIC_FOLDER)
 }

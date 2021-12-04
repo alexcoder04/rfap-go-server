@@ -11,7 +11,7 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PublicFolder + path
+	path = PUBLIC_FOLDER + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -69,7 +69,7 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PublicFolder + path
+	path = PUBLIC_FOLDER + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -110,7 +110,7 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PublicFolder + path
+	path = PUBLIC_FOLDER + path
 
 	stat, err := os.Stat(path)
 	if err != nil {
