@@ -1,0 +1,7 @@
+version: "1.0"
+services:
+  windows_build:
+    build: ./src
+    volumes:
+      - "./out:/go/src/app/out"
+    container_name: windows_build

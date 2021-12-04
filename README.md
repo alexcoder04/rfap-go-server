@@ -7,6 +7,14 @@ See [here](#related-projects) for protocol specifications and related projects.
 
 ## Installation
 
+### For Windows
+
+Assuming you have docker-compose installed and in path.
+```
+docker-compose build
+docker-compose up
+```
+
 ### Stable release
 
 **Coming soon**
