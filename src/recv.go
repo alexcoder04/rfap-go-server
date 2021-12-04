@@ -12,7 +12,7 @@ import (
 
 func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// receive
-	buffer := make([]byte, VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+(MAX_CONT_LENGTH_MB*1024*1024)+CONT_LEN_INDIC_LENGTH+(MAX_CONT_LENGTH_MB*1024*1024))
+	buffer := make([]byte, MAX_PACKET_LENGTH)
 	err := conn.SetReadDeadline(time.Now().Add(CONN_RECV_TIMEOUT_SECS * time.Second))
 	if err != nil {
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrSetReadTimeoutFailed{}
@@ -32,26 +32,40 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
 	}
 
-	headerLength := binary.BigEndian.Uint32(buffer[VERSION_LENGTH : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH])
+	headerLengthBegin := VERSION_LENGTH
+	headerLengthEnd := headerLengthBegin + CONT_LEN_INDIC_LENGTH
+	headerLength := binary.BigEndian.Uint32(buffer[headerLengthBegin:headerLengthEnd])
 	logger.Debug("header length:", headerLength)
 
-	command := binary.BigEndian.Uint32(buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+COMMAND_LENGTH])
-	logger.Debug("command: 0x" + hex.EncodeToString(buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH:VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+COMMAND_LENGTH]))
+	commandBegin := VERSION_LENGTH + CONT_LEN_INDIC_LENGTH
+	commandEnd := commandBegin + COMMAND_LENGTH
+	command := binary.BigEndian.Uint32(buffer[commandBegin:commandEnd])
+	logger.Debug("command: 0x" + hex.EncodeToString(buffer[commandBegin:commandEnd]))
 
-	headerRaw := buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+COMMAND_LENGTH : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+(headerLength-CHECKSUM_LENGTH)]
+	headerBegin := headerLengthEnd + COMMAND_LENGTH
+	headerEnd := headerLengthEnd + (int(headerLength) - CHECKSUM_LENGTH)
+	headerRaw := buffer[headerBegin:headerEnd]
 	logger.Debug("header:", hex.EncodeToString(headerRaw))
 
-	headerChecksum := buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+(headerLength-CHECKSUM_LENGTH) : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength]
+	headerChecksumBegin := headerEnd
+	headerChecksumEnd := headerChecksumBegin + CHECKSUM_LENGTH
+	headerChecksum := buffer[headerChecksumBegin:headerChecksumEnd]
 	_ = headerChecksum
 	logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
 
-	bodyLength := binary.BigEndian.Uint32(buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength+CONT_LEN_INDIC_LENGTH])
+	bodyLengthBegin := headerChecksumEnd
+	bodyLengthEnd := bodyLengthBegin + CONT_LEN_INDIC_LENGTH
+	bodyLength := binary.BigEndian.Uint32(buffer[bodyLengthBegin:bodyLengthEnd])
 	logger.Debug("body length:", bodyLength)
 
-	body := buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength+CONT_LEN_INDIC_LENGTH : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength+CONT_LEN_INDIC_LENGTH+(bodyLength-CHECKSUM_LENGTH)]
+	bodyBegin := bodyLengthEnd
+	bodyEnd := bodyBegin + (int(bodyLength) - CHECKSUM_LENGTH)
+	body := buffer[bodyBegin:bodyEnd]
 	logger.Debug("body:", hex.EncodeToString(body))
 
-	bodyChecksum := buffer[VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength+CONT_LEN_INDIC_LENGTH+(bodyLength-CHECKSUM_LENGTH) : VERSION_LENGTH+CONT_LEN_INDIC_LENGTH+headerLength+CONT_LEN_INDIC_LENGTH+bodyLength]
+	bodyChecksumBegin := bodyEnd
+	bodyChecksumEnd := bodyChecksumBegin + CHECKSUM_LENGTH
+	bodyChecksum := buffer[bodyChecksumBegin:bodyChecksumEnd]
 	_ = bodyChecksum
 	logger.Debug("body checksum:", hex.EncodeToString(bodyChecksum))
 

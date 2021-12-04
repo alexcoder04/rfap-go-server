@@ -12,6 +12,8 @@ const (
 	COMMAND_LENGTH        = 4
 	CHECKSUM_LENGTH       = 32
 
+	MAX_PACKET_LENGTH = VERSION_LENGTH + CONT_LEN_INDIC_LENGTH + (MAX_CONT_LENGTH_MB * 1024 * 1024) + CONT_LEN_INDIC_LENGTH + (MAX_CONT_LENGTH_MB * 1024 * 1024)
+
 	connHost = "localhost"
 	connPort = "6700"
 	connType = "tcp"
