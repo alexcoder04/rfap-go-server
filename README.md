@@ -26,6 +26,6 @@ go install . # compile and install executable to $GOPATH/bin
 
  - https://github.com/alexcoder04/rfap - general protocol specification
  - https://github.com/alexcoder04/librfap - Python library
- - https://github.com/BoettcherDasOriginal/rfab-cs-lib - C# library
+ - https://github.com/BoettcherDasOriginal/rfap-cs-lib - C# library
  - https://github.com/alexcoder04/rfap-pycli - Python CLI client based on librfap
 
