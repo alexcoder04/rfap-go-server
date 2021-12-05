@@ -7,29 +7,46 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func errRecvPacket(version uint32, conn net.Conn, err error) {
+	if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("rfap version ", version, " unsupported ")
+		CleanErrorDisconnect(conn)
+		return
+	}
+	if _, ok := err.(*ErrClientCrashed); ok {
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("client crashed")
+		CleanErrorDisconnect(conn)
+		return
+	}
+	logger.WithFields(logrus.Fields{
+		"client": conn.RemoteAddr().String(),
+	}).Error("error recieving packet: ", err.Error())
+	CleanErrorDisconnect(conn)
+	return
+}
+
 func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
 	_ = body
 	if err != nil {
-		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("rfap version ", version, " unsupported ")
-			CleanErrorDisconnect(conn)
-			return
-		}
-		if _, ok := err.(*ErrClientCrashed); ok {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("client crashed")
-			CleanErrorDisconnect(conn)
-			return
-		}
-		logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
-		}).Error("error recieving packet: ", err.Error())
-		CleanErrorDisconnect(conn)
+		errRecvPacket(version, conn, err)
 		return
+	}
+	// TODO check if command, version, ... match
+	// TODO check if number of packet is okay
+	if header.PacketsTotal > 1 {
+		for i := 1; i < header.PacketsTotal; i++ {
+			thisVersion, _, _, bodyPart, err := RecvPacket(conn)
+			if err != nil {
+				errRecvPacket(thisVersion, conn, err)
+				return
+			}
+			body = ConcatBytes(body, bodyPart)
+		}
 	}
 
 	switch command {
