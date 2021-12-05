@@ -17,5 +17,6 @@ src/rfap-go-server_*
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# log files
+# server files
 *.log
+src/shared
