@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TODO this should be in the other file
 func errRecvPacket(version uint32, conn net.Conn, err error) {
 	if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
 		logger.WithFields(logrus.Fields{
