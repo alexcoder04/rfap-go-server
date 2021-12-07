@@ -48,3 +48,15 @@ type ErrClientCrashed struct{}
 func (e *ErrClientCrashed) Error() string {
 	return "Client crashed"
 }
+
+type ErrInvalidPacketNumber struct{}
+
+func (e *ErrInvalidPacketNumber) Error() string {
+	return "Invalid total number of packets"
+}
+
+type ErrDifferentPacketsDontMatch struct{}
+
+func (e *ErrDifferentPacketsDontMatch) Error() string {
+	return "Data in different packets doesn't match"
+}

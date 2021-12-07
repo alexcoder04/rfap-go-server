@@ -2,7 +2,7 @@
 # rfap-go-server
 
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/alexcoder04/rfap-go-server?include_prereleases)](https://github.com/alexcoder04/rfap-go-server/releases/latest)
-![GitHub top language](https://img.shields.io/github/languages/top/alexcoder04/rfap-go-server)
+[![GitHub top language](https://img.shields.io/github/languages/top/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/search?l=go)
 [![GitHub](https://img.shields.io/github/license/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/pulls)

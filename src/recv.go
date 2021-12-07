@@ -10,6 +10,38 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func RecvData(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
+	versionFirst, commandFirst, metadataFirst, body, err := RecvPacket(conn)
+	if err != nil {
+		return versionFirst, commandFirst, metadataFirst, body, err
+	}
+	if metadataFirst.PacketsTotal < 1 {
+		return versionFirst, commandFirst, metadataFirst, body, &ErrInvalidPacketNumber{}
+	}
+	if metadataFirst.PacketsTotal == 1 {
+		return versionFirst, commandFirst, metadataFirst, body, nil
+	}
+
+	for i := 1; i < metadataFirst.PacketsTotal; i++ {
+		thisVersion, thisCommand, thisMetadata, bodyPart, err := RecvPacket(conn)
+		if err != nil {
+			return versionFirst, commandFirst, metadataFirst, body, err
+		}
+		if thisVersion != versionFirst {
+			return versionFirst, commandFirst, metadataFirst, body, &ErrDifferentPacketsDontMatch{}
+		}
+		if thisMetadata.PacketNumber != i+1 {
+			return versionFirst, commandFirst, metadataFirst, body, &ErrInvalidPacketNumber{}
+		}
+		if thisCommand != commandFirst {
+			return versionFirst, commandFirst, metadataFirst, body, &ErrDifferentPacketsDontMatch{}
+		}
+		// TODO check if metadata is same (its a struct, but we dont have to compare all values)
+		body = ConcatBytes(body, bodyPart)
+	}
+	return versionFirst, commandFirst, metadataFirst, body, nil
+}
+
 func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// receive
 	buffer := make([]byte, MAX_PACKET_LENGTH)

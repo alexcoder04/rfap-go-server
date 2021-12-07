@@ -10,21 +10,6 @@ import (
 )
 
 func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte) error {
-	// TODO refactor this into separate function
-	// split if necessary
-	if len(body) > MAX_CONT_LENGTH_MB*1024*1024 {
-		for i := 0; i < len(body); i += MAX_CONT_LENGTH_MB * 1024 * 1024 {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Debug("Sending portion packet...")
-			err := SendPacket(conn, command, metadata, body[i:MAX_CONT_LENGTH_MB*1024*1024])
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
 	// version
 	version := make([]byte, VERSION_LENGTH)
 	binary.BigEndian.PutUint16(version, RFAP_VERSION)
@@ -65,5 +50,24 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	logger.WithFields(logrus.Fields{
 		"client": conn.RemoteAddr().String(),
 	}).Info("sent packet 0x", hex.EncodeToString(commandBytes))
+	return nil
+}
+
+// same as SendPacket, but can handle bodies larger then max length (splitting)
+func SendData(conn net.Conn, command int, metadata HeaderMetadata, body []byte) error {
+	if len(body) <= MAX_CONT_LENGTH_MB*1024*1024 {
+		return SendPacket(conn, command, metadata, body)
+	}
+
+	for i := 0; i < len(body); i += MAX_CONT_LENGTH_MB * 1024 * 1024 {
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Debug("Sending portion packet...")
+		err := SendPacket(conn, command, metadata, body[i:MAX_CONT_LENGTH_MB*1024*1024])
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
