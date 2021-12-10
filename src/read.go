@@ -3,6 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -12,6 +14,17 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	metadata.Path = path
 
 	path = PUBLIC_FOLDER + path
+	path, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		metadata.ErrorCode = ERROR_UNKNOWN
+		metadata.ErrorMessage = "Unknown error while readlink"
+		return metadata
+	}
+	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
+		metadata.ErrorCode = ERROR_ACCESS_DENIED
+		metadata.ErrorMessage = "You are not permitted to read this folder"
+		return metadata
+	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -70,6 +83,17 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 	metadata.Path = path
 
 	path = PUBLIC_FOLDER + path
+	path, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		metadata.ErrorCode = ERROR_UNKNOWN
+		metadata.ErrorMessage = "Unknown error while readlink"
+		return metadata, make([]byte, 0), err
+	}
+	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
+		metadata.ErrorCode = ERROR_ACCESS_DENIED
+		metadata.ErrorMessage = "You are not permitted to read this folder"
+		return metadata, make([]byte, 0), &ErrAccessDenied{}
+	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -111,6 +135,17 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 	metadata.Path = path
 
 	path = PUBLIC_FOLDER + path
+	path, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		metadata.ErrorCode = ERROR_UNKNOWN
+		metadata.ErrorMessage = "Unknown error while readlink"
+		return metadata, make([]byte, 0), err
+	}
+	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
+		metadata.ErrorCode = ERROR_ACCESS_DENIED
+		metadata.ErrorMessage = "You are not permitted to read this folder"
+		return metadata, make([]byte, 0), &ErrAccessDenied{}
+	}
 
 	stat, err := os.Stat(path)
 	if err != nil {

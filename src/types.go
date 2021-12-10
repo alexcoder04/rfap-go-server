@@ -60,3 +60,9 @@ type ErrDifferentPacketsDontMatch struct{}
 func (e *ErrDifferentPacketsDontMatch) Error() string {
 	return "Data in different packets doesn't match"
 }
+
+type ErrAccessDenied struct{}
+
+func (e *ErrAccessDenied) Error() string {
+	return "Data in different packets doesn't match"
+}
