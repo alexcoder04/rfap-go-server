@@ -13,8 +13,7 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PUBLIC_FOLDER + path
-	path, err := filepath.EvalSymlinks(path)
+	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
 		metadata.ErrorCode = ERROR_UNKNOWN
 		metadata.ErrorMessage = "Unknown error while readlink"
@@ -82,8 +81,7 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PUBLIC_FOLDER + path
-	path, err := filepath.EvalSymlinks(path)
+	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
 		metadata.ErrorCode = ERROR_UNKNOWN
 		metadata.ErrorMessage = "Unknown error while readlink"
@@ -134,8 +132,7 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path = PUBLIC_FOLDER + path
-	path, err := filepath.EvalSymlinks(path)
+	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
 		metadata.ErrorCode = ERROR_UNKNOWN
 		metadata.ErrorMessage = "Unknown error while readlink"
