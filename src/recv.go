@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
+func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// version
 	versionBytes := make([]byte, VERSION_LENGTH)
 	err := conn.SetReadDeadline(time.Now().Add(CONN_RECV_TIMEOUT_SECS * time.Second))
@@ -24,7 +24,7 @@ func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
 		}
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
-	version := binary.BigEndian.Uint32(versionBytes)
+	version := uint32(binary.BigEndian.Uint16(versionBytes))
 	logger.Debug("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
@@ -36,7 +36,7 @@ func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
 	if err != nil {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
-	headerLength := binary.BigEndian.Uint64(headerLengthBytes)
+	headerLength := binary.BigEndian.Uint32(headerLengthBytes)
 	logger.Debug("header length:", headerLength)
 
 	// raw header
@@ -47,7 +47,7 @@ func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
 	}
 
 	// command
-	command := binary.BigEndian.Uint64(headerRaw[:4])
+	command := binary.BigEndian.Uint32(headerRaw[:4])
 	logger.Debug("command: 0x" + hex.EncodeToString(headerRaw[:4]))
 
 	// metadata
@@ -64,10 +64,11 @@ func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
 	if err != nil {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
-	bodyLength := binary.BigEndian.Uint64(bodyLengthBytes)
+	bodyLength := binary.BigEndian.Uint32(bodyLengthBytes)
 	logger.Debug("body length:", bodyLength)
 
 	bodyRaw := make([]byte, bodyLength)
+	// TODO recv in loop, body_length may be very big
 	_, err = conn.Read(bodyRaw[:])
 	if err != nil {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
@@ -80,7 +81,7 @@ func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
 
 	// parse
 	header := HeaderMetadata{}
-	err = yaml.Unmarshal([]byte(headerRaw), &header)
+	err = yaml.Unmarshal(headerRaw[4:len(headerRaw)-32], &header)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),

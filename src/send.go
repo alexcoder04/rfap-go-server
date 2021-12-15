@@ -16,7 +16,7 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 
 	// command
 	commandBytes := make([]byte, COMMAND_LENGTH)
-	binary.BigEndian.PutUint64(commandBytes, uint64(command))
+	binary.BigEndian.PutUint32(commandBytes, uint32(command))
 
 	// header encode
 	metadataBytes, err := yaml.Marshal(&metadata)
@@ -28,9 +28,9 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	}).Trace("header length: ", len(metadataBytes))
 
 	// header length
-	headerLength := uint64(COMMAND_LENGTH + len(metadataBytes) + CHECKSUM_LENGTH)
+	headerLength := uint32(COMMAND_LENGTH + len(metadataBytes) + CHECKSUM_LENGTH)
 	headerLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
-	binary.BigEndian.PutUint64(headerLengthBytes, headerLength)
+	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
 
 	// checksum
 	checksum := make([]byte, CHECKSUM_LENGTH)
@@ -39,9 +39,9 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	}
 
 	// body length send
-	bodyLength := uint64(len(body) + CHECKSUM_LENGTH)
+	bodyLength := uint32(len(body) + CHECKSUM_LENGTH)
 	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
-	binary.BigEndian.PutUint64(bodyLengthBytes, bodyLength)
+	binary.BigEndian.PutUint32(bodyLengthBytes, bodyLength)
 	logger.WithFields(logrus.Fields{
 		"client": conn.RemoteAddr().String(),
 	}).Trace("body length: ", bodyLength)
@@ -66,6 +66,10 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 			return err
 		}
 		i += MAX_BYTES_SEND_AT_ONCE
+	}
+	_, err = conn.Write(checksum)
+	if err != nil {
+		return err
 	}
 
 	logger.WithFields(logrus.Fields{
