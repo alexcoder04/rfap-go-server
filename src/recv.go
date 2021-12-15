@@ -10,65 +10,73 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
-	// TODO recv bit by bit
-	// receive
-	buffer := make([]byte, MAX_PACKET_LENGTH)
+func RecvPacket(conn net.Conn) (uint32, uint64, HeaderMetadata, []byte, error) {
+	// version
+	versionBytes := make([]byte, VERSION_LENGTH)
 	err := conn.SetReadDeadline(time.Now().Add(CONN_RECV_TIMEOUT_SECS * time.Second))
 	if err != nil {
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrSetReadTimeoutFailed{}
 	}
-	_, err = conn.Read(buffer[:])
+	_, err = conn.Read(versionBytes[:])
 	if err != nil {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrClientCrashed{}
 		}
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
-
-	// sort and split
-	version := uint32(binary.BigEndian.Uint16(buffer[:VERSION_LENGTH]))
+	version := binary.BigEndian.Uint32(versionBytes)
 	logger.Debug("version:", version)
 	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
 	}
 
-	headerLengthBegin := VERSION_LENGTH
-	headerLengthEnd := headerLengthBegin + CONT_LEN_INDIC_LENGTH
-	headerLength := binary.BigEndian.Uint32(buffer[headerLengthBegin:headerLengthEnd])
+	// header length
+	headerLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
+	_, err = conn.Read(headerLengthBytes[:])
+	if err != nil {
+		return version, 0, HeaderMetadata{}, make([]byte, 0), err
+	}
+	headerLength := binary.BigEndian.Uint64(headerLengthBytes)
 	logger.Debug("header length:", headerLength)
 
-	commandBegin := VERSION_LENGTH + CONT_LEN_INDIC_LENGTH
-	commandEnd := commandBegin + COMMAND_LENGTH
-	command := binary.BigEndian.Uint32(buffer[commandBegin:commandEnd])
-	logger.Debug("command: 0x" + hex.EncodeToString(buffer[commandBegin:commandEnd]))
+	// raw header
+	headerRaw := make([]byte, headerLength)
+	_, err = conn.Read(headerRaw[:])
+	if err != nil {
+		return version, 0, HeaderMetadata{}, make([]byte, 0), err
+	}
 
-	headerBegin := headerLengthEnd + COMMAND_LENGTH
-	headerEnd := headerLengthEnd + (int(headerLength) - CHECKSUM_LENGTH)
-	headerRaw := buffer[headerBegin:headerEnd]
-	logger.Debug("header:", hex.EncodeToString(headerRaw))
+	// command
+	command := binary.BigEndian.Uint64(headerRaw[:4])
+	logger.Debug("command: 0x" + hex.EncodeToString(headerRaw[:4]))
 
-	headerChecksumBegin := headerEnd
-	headerChecksumEnd := headerChecksumBegin + CHECKSUM_LENGTH
-	headerChecksum := buffer[headerChecksumBegin:headerChecksumEnd]
-	_ = headerChecksum
+	// metadata
+	headerBytes := headerRaw[4 : len(headerRaw)-32]
+	logger.Debug("header:", hex.EncodeToString(headerBytes))
+
+	// header checksum
+	headerChecksum := headerRaw[:len(headerRaw)-32]
 	logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
 
-	bodyLengthBegin := headerChecksumEnd
-	bodyLengthEnd := bodyLengthBegin + CONT_LEN_INDIC_LENGTH
-	bodyLength := binary.BigEndian.Uint32(buffer[bodyLengthBegin:bodyLengthEnd])
+	// body length
+	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
+	_, err = conn.Read(bodyLengthBytes[:])
+	if err != nil {
+		return version, 0, HeaderMetadata{}, make([]byte, 0), err
+	}
+	bodyLength := binary.BigEndian.Uint64(bodyLengthBytes)
 	logger.Debug("body length:", bodyLength)
 
-	bodyBegin := bodyLengthEnd
-	bodyEnd := bodyBegin + (int(bodyLength) - CHECKSUM_LENGTH)
-	body := buffer[bodyBegin:bodyEnd]
-	logger.Debug("body:", hex.EncodeToString(body))
-
-	bodyChecksumBegin := bodyEnd
-	bodyChecksumEnd := bodyChecksumBegin + CHECKSUM_LENGTH
-	bodyChecksum := buffer[bodyChecksumBegin:bodyChecksumEnd]
-	_ = bodyChecksum
-	logger.Debug("body checksum:", hex.EncodeToString(bodyChecksum))
+	bodyRaw := make([]byte, bodyLength)
+	_, err = conn.Read(bodyRaw[:])
+	if err != nil {
+		return version, 0, HeaderMetadata{}, make([]byte, 0), err
+	}
+	body := bodyRaw[:len(bodyRaw)-32]
+	bodyChecksum := bodyRaw[len(bodyRaw)-32:]
+	logger.WithFields(logrus.Fields{
+		"client": conn.RemoteAddr().String(),
+	}).Debug("body checksum: ", hex.EncodeToString(bodyChecksum))
 
 	// parse
 	header := HeaderMetadata{}

@@ -52,3 +52,9 @@ type ErrAccessDenied struct{}
 func (e *ErrAccessDenied) Error() string {
 	return "Data in different packets doesn't match"
 }
+
+type ErrInvalidContentLength struct{}
+
+func (e *ErrInvalidContentLength) Error() string {
+	return "Invalid content length"
+}
