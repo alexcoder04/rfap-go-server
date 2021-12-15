@@ -6,11 +6,9 @@ type HeaderMetadata struct {
 
 	RequestDetails []string `yaml:"RequestDetails"`
 
-	Path         string `yaml:"Path"`
-	Type         string `yaml:"Type"`
-	Modified     int    `yaml:"Modified"`
-	PacketsTotal int    `yaml:"PacketsTotal"`
-	PacketNumber int    `yaml:"PacketNumber"`
+	Path     string `yaml:"Path"`
+	Type     string `yaml:"Type"`
+	Modified int    `yaml:"Modified"`
 
 	FileSize int    `yaml:"FileSize"`
 	FileType string `yaml:"FileType"`
@@ -47,18 +45,6 @@ type ErrClientCrashed struct{}
 
 func (e *ErrClientCrashed) Error() string {
 	return "Client crashed"
-}
-
-type ErrInvalidPacketNumber struct{}
-
-func (e *ErrInvalidPacketNumber) Error() string {
-	return "Invalid total number of packets"
-}
-
-type ErrDifferentPacketsDontMatch struct{}
-
-func (e *ErrDifferentPacketsDontMatch) Error() string {
-	return "Data in different packets doesn't match"
 }
 
 type ErrAccessDenied struct{}

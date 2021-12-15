@@ -10,7 +10,7 @@ import (
 
 func main() {
 	Init()
-	logger.Info("Starting " + connType + " server on " + connHost + ":" + connPort)
+	logger.Info("Starting " + connType + " server on " + connHost + ":" + connPort + " sharing " + PUBLIC_FOLDER + "...")
 
 	l, err := net.Listen(connType, connHost+":"+connPort)
 	if err != nil {
