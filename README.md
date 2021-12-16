@@ -17,7 +17,8 @@ See [here](#related-projects) for protocol specifications and related projects.
 
 ### Stable release
 
-**Coming soon**
+Simply download the binary for your OS from [the releases
+page](https://github.com/alexcoder04/rfap-go-server/releases/latest).
 
 ### Bleeding-edge
 
