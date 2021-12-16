@@ -58,7 +58,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	logger.Debug("header:", hex.EncodeToString(headerBytes))
 
 	// header checksum
-	headerChecksum := headerRaw[:len(headerRaw)-32]
+	headerChecksum := headerRaw[len(headerRaw)-32:]
 	logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
 
 	// body length
