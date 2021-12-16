@@ -38,6 +38,9 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	}
 	headerLength := binary.BigEndian.Uint32(headerLengthBytes)
 	logger.Debug("header length:", headerLength)
+	if headerLength > (1024 * 8) {
+		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrInvalidContentLength{}
+	}
 
 	// raw header
 	headerRaw := make([]byte, headerLength)

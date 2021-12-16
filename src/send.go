@@ -26,6 +26,9 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	logger.WithFields(logrus.Fields{
 		"client": conn.RemoteAddr().String(),
 	}).Trace("header length: ", len(metadataBytes))
+	if len(metadataBytes) > (1024 * 8) {
+		return &ErrInvalidContentLength{}
+	}
 
 	// header length
 	headerLength := uint32(COMMAND_LENGTH + len(metadataBytes) + CHECKSUM_LENGTH)
