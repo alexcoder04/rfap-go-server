@@ -7,6 +7,6 @@ import (
 	"os"
 )
 
-const PUBLIC_FOLDER = "/tmp/rfap-share"
+const PUBLIC_FOLDER = "/srv/rfap/shared"
 
 var LOG_FILE = fmt.Sprintf("/tmp/rfap-go-server-%d.log", os.Getpid())

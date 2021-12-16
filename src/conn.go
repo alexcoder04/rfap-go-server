@@ -25,20 +25,6 @@ func HanleConnection(conn net.Conn) {
 			CleanErrorDisconnect(conn)
 			return
 		}
-		if _, ok := err.(*ErrInvalidPacketNumber); ok {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("invalid packet number")
-			CleanErrorDisconnect(conn)
-			return
-		}
-		if _, ok := err.(*ErrDifferentPacketsDontMatch); ok {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("data in different packets doesn't match")
-			CleanErrorDisconnect(conn)
-			return
-		}
 		logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Error("error recieving packet: ", err.Error())
@@ -113,7 +99,7 @@ func HanleConnection(conn net.Conn) {
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error reading file ", header.Path, ": ", err.Error())
 		}
-		err = SendData(conn, CMD_FILE_READ+1, metadata, content)
+		err = SendPacket(conn, CMD_FILE_READ+1, metadata, content)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -135,7 +121,7 @@ func HanleConnection(conn net.Conn) {
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error reading dir ", header.Path, ": ", err.Error())
 		}
-		err = SendData(conn, CMD_DIRECTORY_READ+1, metadata, content)
+		err = SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, content)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
