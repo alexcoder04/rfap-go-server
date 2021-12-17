@@ -17,6 +17,13 @@ func Init() {
 		InitFileLogger()
 	}
 
+	logger.WithFields(logrus.Fields{
+		"commit":     GIT_COMMIT,
+		"build time": BUILD_TIMESTAMP,
+		"version":    SERVER_VERSION,
+		"os":         BUILD_OS,
+	}).Info("build info")
+
 	_, err := os.Stat(PUBLIC_FOLDER)
 	if err != nil {
 		if os.IsNotExist(err) {

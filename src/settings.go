@@ -20,4 +20,12 @@ const (
 
 var SUPPORTED_RFAP_VERSIONS = []uint32{2}
 
+// build-time vars
+var (
+	SERVER_VERSION  = "n/a"
+	GIT_COMMIT      = "n/a"
+	BUILD_TIMESTAMP = "n/a"
+	BUILD_OS        = "n/a"
+)
+
 var MAX_CLIENTS = runtime.NumCPU() * 4 // 4 clients per core

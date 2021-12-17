@@ -29,9 +29,13 @@ git clone https://github.com/alexcoder04/rfap-go-server
 cd rfap-go-server/src
 
 make run     # start testing server
-make linux   # compile executable, other possible arguments: windows/raspberry
-go install . # compile and install executable to $GOPATH/bin
+make linux   # compile linux executable
+make windows # compile windows executable
+make install # compile and install executable to $GOPATH/bin
 ```
+
+Please use `make` to compile the server, because it tells `go` to inject build
+information into the executable which is then useful for understanding logs.
 
 ## Related projects
 
