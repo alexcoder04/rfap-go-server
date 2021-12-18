@@ -24,6 +24,10 @@ run:
 	RFAP_MODE=testing RFAP_LOG_LEVEL=trace\
 		go run -ldflags $(LDFLAGS) .
 
+run-quiet:
+	RFAP_MODE=testing RFAP_LOG_LEVEL=info\
+		go run -ldflags $(LDFLAGS) .
+
 install:
 	go install -ldflags $(LDFLAGS) .
 

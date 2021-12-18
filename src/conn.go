@@ -107,7 +107,24 @@ func HanleConnection(conn net.Conn) {
 		}
 		break
 
-	// TODO optional file commands
+	case CMD_FILE_DELETE:
+		logger.WithFields(logrus.Fields{
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_delete",
+		}).Info("packet: delete file ", header.Path)
+		metadata, err := DeleteFile(header.Path)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error deleting file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_FILE_DELETE+1, metadata, make([]byte, 0))
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("error while response to file_delete: ", err.Error())
+		}
+		break
 
 	// directory commands
 	case CMD_DIRECTORY_READ:
@@ -128,7 +145,6 @@ func HanleConnection(conn net.Conn) {
 			}).Error("error while response to directory_read: ", err.Error())
 		}
 		break
-	// TODO optional directory commands
 
 	// unknown command
 	default:
