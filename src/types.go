@@ -58,3 +58,9 @@ type ErrInvalidContentLength struct{}
 func (e *ErrInvalidContentLength) Error() string {
 	return "Invalid content length"
 }
+
+type ErrChecksumsNotMatching struct{}
+
+func (e *ErrChecksumsNotMatching) Error() string {
+	return "Checkums don't match"
+}
