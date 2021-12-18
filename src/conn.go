@@ -126,6 +126,25 @@ func HanleConnection(conn net.Conn) {
 		}
 		break
 
+	case CMD_FILE_CREATE:
+		logger.WithFields(logrus.Fields{
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_create",
+		}).Info("packet: create file ", header.Path)
+		metadata, err := CreateFile(header.Path)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error creating file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_FILE_CREATE+1, metadata, make([]byte, 0))
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("error while response to file_create: ", err.Error())
+		}
+		break
+
 	// directory commands
 	case CMD_DIRECTORY_READ:
 		logger.WithFields(logrus.Fields{
