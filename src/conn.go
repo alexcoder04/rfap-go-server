@@ -145,6 +145,25 @@ func HanleConnection(conn net.Conn) {
 		}
 		break
 
+	case CMD_FILE_COPY:
+		logger.WithFields(logrus.Fields{
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_copy",
+		}).Info("packet: copy file ", header.Path, " to ", header.Destination)
+		metadata, err := CopyFile(header.Path, header.Destination)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error copying file ", header.Path, " to ", header.Destination, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_FILE_COPY+1, metadata, make([]byte, 0))
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("error while response to file_copy: ", err.Error())
+		}
+		break
+
 	// directory commands
 	case CMD_DIRECTORY_READ:
 		logger.WithFields(logrus.Fields{

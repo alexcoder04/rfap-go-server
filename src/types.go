@@ -6,9 +6,10 @@ type HeaderMetadata struct {
 
 	RequestDetails []string `yaml:"RequestDetails"`
 
-	Path     string `yaml:"Path"`
-	Type     string `yaml:"Type"`
-	Modified int    `yaml:"Modified"`
+	Path        string `yaml:"Path"`
+	Type        string `yaml:"Type"`
+	Modified    int    `yaml:"Modified"`
+	Destination string `yaml:"Destination"`
 
 	FileSize int    `yaml:"FileSize"`
 	FileType string `yaml:"FileType"`
