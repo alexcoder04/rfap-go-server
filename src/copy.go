@@ -3,28 +3,20 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 func CopyFile(source string, destin string, move bool) (HeaderMetadata, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = source
 
-	source, err := filepath.EvalSymlinks(PUBLIC_FOLDER + source)
+	source, err := ValidatePath(source)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
-	}
-	if !strings.HasPrefix(source, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this file"), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this file"), err
 	}
 
-	destin, err = filepath.EvalSymlinks(PUBLIC_FOLDER + destin)
+	destin, err = ValidatePath(destin)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
-	}
-	if !strings.HasPrefix(destin, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to write to this file"), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(source)

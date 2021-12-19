@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -14,12 +12,9 @@ func WriteFile(path string, content []byte) (HeaderMetadata, []byte, error) {
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
+	path, err := ValidatePath(path)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), body, err
-	}
-	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to write to this file"), body, &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, err
 	}
 
 	stat, err := os.Stat(path)

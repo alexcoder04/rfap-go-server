@@ -3,8 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -14,12 +12,9 @@ func Info(path string, requestDetails []string) (HeaderMetadata, []byte, error) 
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
+	path, err := ValidatePath(path)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), body, err
-	}
-	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), body, &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this folder"), body, err
 	}
 
 	stat, err := os.Stat(path)
@@ -70,12 +65,9 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
+	path, err := ValidatePath(path)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), make([]byte, 0), err
-	}
-	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), make([]byte, 0), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
 	}
 
 	stat, err := os.Stat(path)
@@ -109,12 +101,9 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
-	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
+	path, err := ValidatePath(path)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), make([]byte, 0), err
-	}
-	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), make([]byte, 0), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
 	}
 
 	stat, err := os.Stat(path)
