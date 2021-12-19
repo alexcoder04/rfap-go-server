@@ -9,32 +9,24 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-func Info(path string, requestDetails []string) HeaderMetadata {
+func Info(path string, requestDetails []string) (HeaderMetadata, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
 
 	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
 	}
 	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to read this folder"
-		return metadata
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-			metadata.ErrorMessage = "File or folder does not exist"
-		} else {
-			metadata.ErrorCode = ERROR_UNKNOWN
-			metadata.ErrorMessage = "Unknown error while stat"
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), err
 		}
-		return metadata
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), err
 	}
 
 	metadata.Modified = int(stat.ModTime().Unix())
@@ -45,18 +37,14 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 			case "DirectorySize":
 				size, err := CalculateDirSize(path)
 				if err != nil {
-					metadata.ErrorCode = ERROR_UNKNOWN
-					metadata.ErrorMessage = "Cannot calculate directory size"
-					break
+					return retError(metadata, ERROR_UNKNOWN, "Cannot calculate directory size"), &ErrCalculationFailed{}
 				}
 				metadata.DirectorySize = size
 				break
 			case "ElementsNumber":
 				filesList, err := ioutil.ReadDir(path)
 				if err != nil {
-					metadata.ErrorCode = ERROR_UNKNOWN
-					metadata.ErrorMessage = "Cannot list directory"
-					break
+					return retError(metadata, ERROR_UNKNOWN, "Cannot list directory"), err
 				}
 				metadata.ElementsNumber = len(filesList)
 				break
@@ -74,7 +62,7 @@ func Info(path string, requestDetails []string) HeaderMetadata {
 	}
 
 	metadata.ErrorCode = 0
-	return metadata
+	return metadata, nil
 }
 
 func ReadFile(path string) (HeaderMetadata, []byte, error) {
@@ -83,42 +71,30 @@ func ReadFile(path string) (HeaderMetadata, []byte, error) {
 
 	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), make([]byte, 0), err
 	}
 	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to read this folder"
-		return metadata, make([]byte, 0), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), make([]byte, 0), &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-			metadata.ErrorMessage = "File or folder does not exist"
-		} else {
-			metadata.ErrorCode = ERROR_UNKNOWN
-			metadata.ErrorMessage = "Unknown error while stat file"
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), make([]byte, 0), err
 		}
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat file"), make([]byte, 0), err
 	}
 
 	if stat.IsDir() {
-		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
-		metadata.ErrorMessage = "Is a directory"
 		metadata.Type = "d"
-		return metadata, make([]byte, 0), &ErrIsDir{}
+		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is a directory"), make([]byte, 0), &ErrIsDir{}
 	}
 	metadata.Type = "f"
 	metadata.FileSize = int(stat.Size())
 
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Cannot read file"
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Cannot read file"), make([]byte, 0), err
 	}
 
 	mtype := mimetype.Detect(content)
@@ -134,39 +110,28 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 
 	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), make([]byte, 0), err
 	}
 	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to read this folder"
-		return metadata, make([]byte, 0), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), make([]byte, 0), &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-			metadata.ErrorMessage = "Folder does not exist"
-		} else {
-			metadata.ErrorCode = ERROR_UNKNOWN
-			metadata.ErrorMessage = "Error while stat"
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "Folder does not exist"), make([]byte, 0), err
 		}
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), make([]byte, 0), err
 	}
 
 	if !stat.Mode().IsDir() {
-		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
-		metadata.ErrorMessage = "Is not a directory"
-		return metadata, make([]byte, 0), &ErrIsNotDir{}
+		metadata.Type = "f"
+		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is not a directory"), make([]byte, 0), &ErrIsNotDir{}
 	}
 
 	filesList, err := ioutil.ReadDir(path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Cound not list folder"
-		return metadata, make([]byte, 0), err
+		return retError(metadata, ERROR_UNKNOWN, "Cound not list folder"), make([]byte, 0), err
 	}
 
 	var result string
@@ -179,18 +144,14 @@ func ReadDirectory(path string, requestDetails []string) (HeaderMetadata, []byte
 		case "DirectorySize":
 			size, err := CalculateDirSize(path)
 			if err != nil {
-				metadata.ErrorCode = ERROR_UNKNOWN
-				metadata.ErrorMessage = "Cannot calculate directory size"
-				break
+				return retError(metadata, ERROR_UNKNOWN, "Cannot calculate directory size"), []byte(result), err
 			}
 			metadata.DirectorySize = size
 			break
 		case "ElementsNumber":
 			filesList, err := ioutil.ReadDir(path)
 			if err != nil {
-				metadata.ErrorCode = ERROR_UNKNOWN
-				metadata.ErrorMessage = "Cannot list directory"
-				break
+				return retError(metadata, ERROR_UNKNOWN, "Cannot list directory"), []byte(result), err
 			}
 			metadata.DirectorySize = len(filesList)
 			break

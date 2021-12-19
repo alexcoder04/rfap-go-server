@@ -12,33 +12,23 @@ func CreateFile(path string) (HeaderMetadata, error) {
 
 	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
 	}
 	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to create this file"
-		return metadata, &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to create this file"), &ErrAccessDenied{}
 	}
 
 	_, err = os.Stat(path)
 	if err == nil {
-		metadata.ErrorCode = ERROR_FILE_EXISTS
-		metadata.ErrorMessage = "File already exists"
-		return metadata, os.ErrExist
+		return retError(metadata, ERROR_FILE_EXISTS, "File already exists"), os.ErrExist
 	}
 	if !os.IsNotExist(err) {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while stat file"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat file"), err
 	}
 
 	f, err := os.Create(path)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Cannot create file"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Cannot create file"), err
 	}
 	f.Close()
 	metadata.ErrorCode = 0

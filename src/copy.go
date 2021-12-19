@@ -13,68 +13,47 @@ func CopyFile(source string, destin string) (HeaderMetadata, error) {
 
 	source, err := filepath.EvalSymlinks(PUBLIC_FOLDER + source)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
 	}
 	if !strings.HasPrefix(source, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to read this file"
-		return metadata, &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this file"), &ErrAccessDenied{}
 	}
 
 	destin, err = filepath.EvalSymlinks(PUBLIC_FOLDER + destin)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while readlink"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
 	}
 	if !strings.HasPrefix(destin, PUBLIC_FOLDER) {
-		metadata.ErrorCode = ERROR_ACCESS_DENIED
-		metadata.ErrorMessage = "You are not permitted to write to this file"
-		return metadata, &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to write to this file"), &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(source)
 	if err != nil {
 		if os.IsNotExist(err) {
-			metadata.ErrorCode = ERROR_FILE_NOT_EXISTS
-			metadata.ErrorMessage = "File or folder does not exist"
-		} else {
-			metadata.ErrorCode = ERROR_UNKNOWN
-			metadata.ErrorMessage = "Unknown error while stat"
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), err
 		}
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), err
 	}
 	if stat.IsDir() {
-		metadata.ErrorCode = ERROR_INVALID_FILE_TYPE
-		metadata.ErrorMessage = "Is a directory"
-		return metadata, &ErrIsDir{}
+		metadata.Type = "d"
+		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is a directory"), &ErrIsDir{}
 	}
 
 	_, err = os.Stat(destin)
 	if err == nil {
-		metadata.ErrorCode = ERROR_FILE_EXISTS
-		metadata.ErrorMessage = "File already exists"
-		return metadata, os.ErrExist
+		return retError(metadata, ERROR_FILE_EXISTS, "File already exists"), os.ErrExist
 	}
 	if !os.IsNotExist(err) {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while stat file"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat file"), err
 	}
 
 	bytesRead, err := ioutil.ReadFile(source)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while read file"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while read file"), err
 	}
 	err = ioutil.WriteFile(destin, bytesRead, 0644)
 	if err != nil {
-		metadata.ErrorCode = ERROR_UNKNOWN
-		metadata.ErrorMessage = "Unknown error while write file"
-		return metadata, err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while write file"), err
 	}
 
 	metadata.ErrorCode = 0

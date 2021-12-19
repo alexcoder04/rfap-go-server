@@ -65,3 +65,9 @@ type ErrChecksumsNotMatching struct{}
 func (e *ErrChecksumsNotMatching) Error() string {
 	return "Checkums don't match"
 }
+
+type ErrCalculationFailed struct{}
+
+func (e *ErrCalculationFailed) Error() string {
+	return "Calculation failed"
+}

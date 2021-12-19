@@ -71,8 +71,13 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
-		data := Info(header.Path, header.RequestDetails)
-		err := SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
+		data, err := Info(header.Path, header.RequestDetails)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error info on file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
