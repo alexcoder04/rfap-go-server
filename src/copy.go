@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func CopyFile(source string, destin string) (HeaderMetadata, error) {
+func CopyFile(source string, destin string, move bool) (HeaderMetadata, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = source
 
@@ -54,6 +54,12 @@ func CopyFile(source string, destin string) (HeaderMetadata, error) {
 	err = ioutil.WriteFile(destin, bytesRead, 0644)
 	if err != nil {
 		return retError(metadata, ERROR_UNKNOWN, "Unknown error while write file"), err
+	}
+	if move {
+		err = os.Remove(source)
+		if err != nil {
+			return retError(metadata, ERROR_UNKNOWN, "Cannot delete source file"), err
+		}
 	}
 
 	metadata.ErrorCode = 0
