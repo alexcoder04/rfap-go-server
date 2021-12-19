@@ -71,13 +71,13 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
-		data, err := Info(header.Path, header.RequestDetails)
+		data, body, err := Info(header.Path, header.RequestDetails)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error info on file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
+		err = SendPacket(conn, CMD_INFO+1, data, body)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -94,60 +94,15 @@ func HanleConnection(conn net.Conn) {
 
 	// file commands
 	case CMD_FILE_READ:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_read",
-		}).Info("packet: read file ", header.Path)
-		metadata, content, err := ReadFile(header.Path)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error reading file ", header.Path, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_READ+1, metadata, content)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_read: ", err.Error())
-		}
+		RunCommand(conn, header, CMD_FILE_READ, "file_read", ReadFile)
 		break
 
 	case CMD_FILE_DELETE:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_delete",
-		}).Info("packet: delete file ", header.Path)
-		metadata, err := DeleteFile(header.Path)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error deleting file ", header.Path, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_DELETE+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_delete: ", err.Error())
-		}
+		RunCommand(conn, header, CMD_FILE_DELETE, "file_delete", DeleteFile)
 		break
 
 	case CMD_FILE_CREATE:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_create",
-		}).Info("packet: create file ", header.Path)
-		metadata, err := CreateFile(header.Path)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error creating file ", header.Path, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_CREATE+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_create: ", err.Error())
-		}
+		RunCommand(conn, header, CMD_FILE_CREATE, "file_create", CreateFile)
 		break
 
 	case CMD_FILE_COPY:

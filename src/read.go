@@ -9,24 +9,25 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-func Info(path string, requestDetails []string) (HeaderMetadata, error) {
+func Info(path string, requestDetails []string) (HeaderMetadata, []byte, error) {
 	metadata := HeaderMetadata{}
 	metadata.Path = path
+	body := make([]byte, 0)
 
 	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
 	if err != nil {
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while readlink"), body, err
 	}
 	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
-		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), &ErrAccessDenied{}
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to read this folder"), body, &ErrAccessDenied{}
 	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), err
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), body, err
 		}
-		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), err
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), body, err
 	}
 
 	metadata.Modified = int(stat.ModTime().Unix())
@@ -37,14 +38,14 @@ func Info(path string, requestDetails []string) (HeaderMetadata, error) {
 			case "DirectorySize":
 				size, err := CalculateDirSize(path)
 				if err != nil {
-					return retError(metadata, ERROR_UNKNOWN, "Cannot calculate directory size"), &ErrCalculationFailed{}
+					return retError(metadata, ERROR_UNKNOWN, "Cannot calculate directory size"), body, &ErrCalculationFailed{}
 				}
 				metadata.DirectorySize = size
 				break
 			case "ElementsNumber":
 				filesList, err := ioutil.ReadDir(path)
 				if err != nil {
-					return retError(metadata, ERROR_UNKNOWN, "Cannot list directory"), err
+					return retError(metadata, ERROR_UNKNOWN, "Cannot list directory"), body, err
 				}
 				metadata.ElementsNumber = len(filesList)
 				break
@@ -62,7 +63,7 @@ func Info(path string, requestDetails []string) (HeaderMetadata, error) {
 	}
 
 	metadata.ErrorCode = 0
-	return metadata, nil
+	return metadata, body, nil
 }
 
 func ReadFile(path string) (HeaderMetadata, []byte, error) {

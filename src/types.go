@@ -18,6 +18,8 @@ type HeaderMetadata struct {
 	ElementsNumber int `yaml:"ElementsNumber"`
 }
 
+type commandExec func(string) (HeaderMetadata, []byte, error)
+
 type ErrUnsupportedRfapVersion struct{}
 
 func (e *ErrUnsupportedRfapVersion) Error() string {
