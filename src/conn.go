@@ -181,6 +181,10 @@ func HanleConnection(conn net.Conn) {
 		}
 		break
 
+	case CMD_DIRECTORY_DELETE:
+		RunCommand(conn, header, CMD_DIRECTORY_DELETE, "directory_delete", DeleteDirectory)
+		break
+
 	// unknown command
 	default:
 		logger.WithFields(logrus.Fields{
