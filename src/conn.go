@@ -9,7 +9,6 @@ import (
 
 func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
-	_ = body
 	if err != nil {
 		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
 			logger.WithFields(logrus.Fields{
@@ -71,13 +70,13 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
-		data, body, err := Info(header.Path, header.RequestDetails)
+		data, respBody, err := Info(header.Path, header.RequestDetails)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error info on file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, CMD_INFO+1, data, body)
+		err = SendPacket(conn, CMD_INFO+1, data, respBody)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -140,6 +139,25 @@ func HanleConnection(conn net.Conn) {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to file_move: ", err.Error())
+		}
+		break
+
+	case CMD_FILE_WRITE:
+		logger.WithFields(logrus.Fields{
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_write",
+		}).Info("packet: write file ", header.Path)
+		metadata, respBody, err := WriteFile(header.Path, body)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error writing file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_FILE_WRITE+1, metadata, respBody)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("error while response to file_write: ", err.Error())
 		}
 		break
 

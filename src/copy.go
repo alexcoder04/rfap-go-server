@@ -51,7 +51,7 @@ func CopyFile(source string, destin string, move bool) (HeaderMetadata, error) {
 	if err != nil {
 		return retError(metadata, ERROR_UNKNOWN, "Unknown error while read file"), err
 	}
-	err = ioutil.WriteFile(destin, bytesRead, 0644)
+	err = ioutil.WriteFile(destin, bytesRead, 0600)
 	if err != nil {
 		return retError(metadata, ERROR_UNKNOWN, "Unknown error while write file"), err
 	}
