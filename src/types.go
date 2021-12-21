@@ -20,6 +20,8 @@ type HeaderMetadata struct {
 
 type commandExec func(string) (HeaderMetadata, []byte, error)
 
+type copySommandExec func(string, string, bool) (HeaderMetadata, []byte, error)
+
 type ErrUnsupportedRfapVersion struct{}
 
 func (e *ErrUnsupportedRfapVersion) Error() string {

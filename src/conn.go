@@ -105,41 +105,11 @@ func HanleConnection(conn net.Conn) {
 		break
 
 	case CMD_FILE_COPY:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_copy",
-		}).Info("packet: copy file ", header.Path, " to ", header.Destination)
-		metadata, err := CopyFile(header.Path, header.Destination, false)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error copying file ", header.Path, " to ", header.Destination, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_COPY+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_copy: ", err.Error())
-		}
+		RunCopyCommand(conn, header, CMD_FILE_COPY, "file_copy", CopyFile, false)
 		break
 
 	case CMD_FILE_MOVE:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_move",
-		}).Info("packet: move file ", header.Path, " to ", header.Destination)
-		metadata, err := CopyFile(header.Path, header.Destination, true)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error moving file ", header.Path, " to ", header.Destination, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_MOVE+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_move: ", err.Error())
-		}
+		RunCopyCommand(conn, header, CMD_FILE_MOVE, "file_move", CopyFile, true)
 		break
 
 	case CMD_FILE_WRITE:
@@ -190,41 +160,11 @@ func HanleConnection(conn net.Conn) {
 		break
 
 	case CMD_DIRECTORY_COPY:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "directory_copy",
-		}).Info("packet: copy dir ", header.Path, " to ", header.Destination)
-		metadata, err := CopyDirectory(header.Path, header.Destination, false)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error copying dir ", header.Path, " to ", header.Destination, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_DIRECTORY_COPY+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to directory_copy: ", err.Error())
-		}
+		RunCopyCommand(conn, header, CMD_DIRECTORY_COPY, "directory_copy", CopyDirectory, false)
 		break
 
 	case CMD_DIRECTORY_MOVE:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "directory_move",
-		}).Info("packet: move directory ", header.Path, " to ", header.Destination)
-		metadata, err := CopyDirectory(header.Path, header.Destination, true)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error moving dir ", header.Path, " to ", header.Destination, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_DIRECTORY_MOVE+1, metadata, make([]byte, 0))
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to directory_move: ", err.Error())
-		}
+		RunCopyCommand(conn, header, CMD_DIRECTORY_MOVE, "directory_move", CopyDirectory, true)
 		break
 
 	// unknown command
