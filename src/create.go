@@ -32,3 +32,31 @@ func CreateFile(path string) (HeaderMetadata, []byte, error) {
 
 	return metadata, body, nil
 }
+
+func CreateDirectory(path string) (HeaderMetadata, []byte, error) {
+	metadata := HeaderMetadata{}
+	metadata.Path = path
+	body := make([]byte, 0)
+
+	path, err := ValidatePath(path)
+	if err != nil {
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
+	}
+
+	_, err = os.Stat(path)
+	if err == nil {
+		return retError(metadata, ERROR_FILE_EXISTS, "File already exists"), body, os.ErrExist
+	}
+	if !os.IsNotExist(err) {
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat file"), body, err
+	}
+
+	err = os.Mkdir(path, 0700)
+	if err != nil {
+		return retError(metadata, ERROR_UNKNOWN, "Cannot create folder"), body, err
+	}
+	metadata.ErrorCode = 0
+	metadata.Type = "d"
+
+	return metadata, body, nil
+}

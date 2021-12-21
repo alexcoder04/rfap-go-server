@@ -3,6 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"os"
+
+	"github.com/otiai10/copy"
 )
 
 func CopyFile(source string, destin string, move bool) (HeaderMetadata, error) {
@@ -55,7 +57,56 @@ func CopyFile(source string, destin string, move bool) (HeaderMetadata, error) {
 	}
 
 	metadata.ErrorCode = 0
-	metadata.Type = "f"
+
+	return metadata, nil
+}
+
+func CopyDirectory(source string, destin string, move bool) (HeaderMetadata, error) {
+	metadata := HeaderMetadata{}
+	metadata.Path = source
+
+	source, err := ValidatePath(source)
+	if err != nil {
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access this file"), err
+	}
+
+	destin, err = ValidatePath(destin)
+	if err != nil {
+		return retError(metadata, ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), &ErrAccessDenied{}
+	}
+
+	stat, err := os.Stat(source)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return retError(metadata, ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), err
+		}
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), err
+	}
+	if !stat.IsDir() {
+		metadata.Type = "f"
+		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is not a directory"), &ErrIsNotDir{}
+	}
+
+	_, err = os.Stat(destin)
+	if err == nil {
+		return retError(metadata, ERROR_FILE_EXISTS, "File already exists"), os.ErrExist
+	}
+	if !os.IsNotExist(err) {
+		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat file"), err
+	}
+
+	err = copy.Copy(source, destin)
+	if err != nil {
+		return retError(metadata, ERROR_UNKNOWN, "Cannot copy directory"), err
+	}
+	if move {
+		err = os.RemoveAll(source)
+		if err != nil {
+			return retError(metadata, ERROR_UNKNOWN, "Cannot delete source directory"), err
+		}
+	}
+
+	metadata.ErrorCode = 0
 
 	return metadata, nil
 }
