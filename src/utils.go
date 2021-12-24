@@ -14,7 +14,7 @@ func retError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMet
 }
 
 func ValidatePath(path string) (string, error) {
-	path, err := filepath.EvalSymlinks(PUBLIC_FOLDER + path)
+	path, err := filepath.Abs(PUBLIC_FOLDER + "/" + path)
 	if err != nil {
 		return path, err
 	}

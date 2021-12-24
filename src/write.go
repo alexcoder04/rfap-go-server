@@ -27,7 +27,7 @@ func WriteFile(path string, content []byte) (HeaderMetadata, []byte, error) {
 		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is a directory"), body, &ErrIsDir{}
 	}
 
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return retError(metadata, ERROR_UNKNOWN, "Cannot open file"), body, err
 	}

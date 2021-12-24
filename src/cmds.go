@@ -1,7 +1,7 @@
 package main
 
 const (
-	RFAP_VERSION = 0x0002
+	RFAP_VERSION = 0x0003
 
 	CMD_PING       = 0x00000000
 	CMD_DISCONNECT = 0x01000000
