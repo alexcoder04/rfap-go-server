@@ -9,7 +9,6 @@ import (
 
 func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
-	_ = body
 	if err != nil {
 		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
 			logger.WithFields(logrus.Fields{
@@ -71,8 +70,13 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
-		data := Info(header.Path, header.RequestDetails)
-		err := SendPacket(conn, CMD_INFO+1, data, make([]byte, 0))
+		data, respBody, err := Info(header.Path, header.RequestDetails)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error info on file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_INFO+1, data, respBody)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -89,25 +93,43 @@ func HanleConnection(conn net.Conn) {
 
 	// file commands
 	case CMD_FILE_READ:
-		logger.WithFields(logrus.Fields{
-			"client":  conn.RemoteAddr().String(),
-			"command": "file_read",
-		}).Info("packet: read file ", header.Path)
-		metadata, content, err := ReadFile(header.Path)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Warning("error reading file ", header.Path, ": ", err.Error())
-		}
-		err = SendPacket(conn, CMD_FILE_READ+1, metadata, content)
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"client": conn.RemoteAddr().String(),
-			}).Error("error while response to file_read: ", err.Error())
-		}
+		RunCommand(conn, header, CMD_FILE_READ, "file_read", ReadFile)
 		break
 
-	// TODO optional file commands
+	case CMD_FILE_DELETE:
+		RunCommand(conn, header, CMD_FILE_DELETE, "file_delete", DeleteFile)
+		break
+
+	case CMD_FILE_CREATE:
+		RunCommand(conn, header, CMD_FILE_CREATE, "file_create", CreateFile)
+		break
+
+	case CMD_FILE_COPY:
+		RunCopyCommand(conn, header, CMD_FILE_COPY, "file_copy", CopyFile, false)
+		break
+
+	case CMD_FILE_MOVE:
+		RunCopyCommand(conn, header, CMD_FILE_MOVE, "file_move", CopyFile, true)
+		break
+
+	case CMD_FILE_WRITE:
+		logger.WithFields(logrus.Fields{
+			"client":  conn.RemoteAddr().String(),
+			"command": "file_write",
+		}).Info("packet: write file ", header.Path)
+		metadata, respBody, err := WriteFile(header.Path, body)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Warning("error writing file ", header.Path, ": ", err.Error())
+		}
+		err = SendPacket(conn, CMD_FILE_WRITE+1, metadata, respBody)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"client": conn.RemoteAddr().String(),
+			}).Error("error while response to file_write: ", err.Error())
+		}
+		break
 
 	// directory commands
 	case CMD_DIRECTORY_READ:
@@ -128,7 +150,22 @@ func HanleConnection(conn net.Conn) {
 			}).Error("error while response to directory_read: ", err.Error())
 		}
 		break
-	// TODO optional directory commands
+
+	case CMD_DIRECTORY_DELETE:
+		RunCommand(conn, header, CMD_DIRECTORY_DELETE, "directory_delete", DeleteDirectory)
+		break
+
+	case CMD_DIRECTORY_CREATE:
+		RunCommand(conn, header, CMD_DIRECTORY_CREATE, "directory_create", CreateDirectory)
+		break
+
+	case CMD_DIRECTORY_COPY:
+		RunCopyCommand(conn, header, CMD_DIRECTORY_COPY, "directory_copy", CopyDirectory, false)
+		break
+
+	case CMD_DIRECTORY_MOVE:
+		RunCopyCommand(conn, header, CMD_DIRECTORY_MOVE, "directory_move", CopyDirectory, true)
+		break
 
 	// unknown command
 	default:

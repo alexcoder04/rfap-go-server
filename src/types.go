@@ -6,9 +6,10 @@ type HeaderMetadata struct {
 
 	RequestDetails []string `yaml:"RequestDetails"`
 
-	Path     string `yaml:"Path"`
-	Type     string `yaml:"Type"`
-	Modified int    `yaml:"Modified"`
+	Path        string `yaml:"Path"`
+	Type        string `yaml:"Type"`
+	Modified    int    `yaml:"Modified"`
+	Destination string `yaml:"Destination"`
 
 	FileSize int    `yaml:"FileSize"`
 	FileType string `yaml:"FileType"`
@@ -16,6 +17,10 @@ type HeaderMetadata struct {
 	DirectorySize  int `yaml:"DirectorySize"`
 	ElementsNumber int `yaml:"ElementsNumber"`
 }
+
+type commandExec func(string) (HeaderMetadata, []byte, error)
+
+type copySommandExec func(string, string, bool) (HeaderMetadata, []byte, error)
 
 type ErrUnsupportedRfapVersion struct{}
 
@@ -57,4 +62,16 @@ type ErrInvalidContentLength struct{}
 
 func (e *ErrInvalidContentLength) Error() string {
 	return "Invalid content length"
+}
+
+type ErrChecksumsNotMatching struct{}
+
+func (e *ErrChecksumsNotMatching) Error() string {
+	return "Checkums don't match"
+}
+
+type ErrCalculationFailed struct{}
+
+func (e *ErrCalculationFailed) Error() string {
+	return "Calculation failed"
 }

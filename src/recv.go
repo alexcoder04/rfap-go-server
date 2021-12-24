@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"net"
@@ -37,7 +39,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 	headerLength := binary.BigEndian.Uint32(headerLengthBytes)
-	logger.Debug("header length:", headerLength)
+	logger.Debug("header length: ", headerLength, ":0x", hex.EncodeToString(headerLengthBytes))
 	if headerLength > (1024 * 8) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrInvalidContentLength{}
 	}
@@ -59,7 +61,12 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 
 	// header checksum
 	headerChecksum := headerRaw[len(headerRaw)-32:]
-	logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
+	headerChecksumExpected := sha256.Sum256(headerRaw[:len(headerRaw)-32])
+	if !bytes.Equal(headerChecksum, headerChecksumExpected[:]) {
+		logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
+		logger.Debug("header checksum expected:", hex.EncodeToString(headerChecksumExpected[:]))
+		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrChecksumsNotMatching{}
+	}
 
 	// body length
 	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
@@ -78,9 +85,16 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	}
 	body := bodyRaw[:len(bodyRaw)-32]
 	bodyChecksum := bodyRaw[len(bodyRaw)-32:]
-	logger.WithFields(logrus.Fields{
-		"client": conn.RemoteAddr().String(),
-	}).Debug("body checksum: ", hex.EncodeToString(bodyChecksum))
+	bodyChecksumExpected := sha256.Sum256(body)
+	if !bytes.Equal(bodyChecksum, bodyChecksumExpected[:]) {
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Debug("body checksum: ", hex.EncodeToString(bodyChecksum))
+		logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Debug("body checksum expected: ", hex.EncodeToString(bodyChecksumExpected[:]))
+		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrChecksumsNotMatching{}
+	}
 
 	// parse
 	header := HeaderMetadata{}

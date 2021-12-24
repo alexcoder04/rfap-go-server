@@ -3,7 +3,26 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
+
+func retError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMetadata {
+	metadata.ErrorCode = errorCode
+	metadata.ErrorMessage = errorMsg
+	return metadata
+}
+
+func ValidatePath(path string) (string, error) {
+	path, err := filepath.Abs(PUBLIC_FOLDER + "/" + path)
+	if err != nil {
+		return path, err
+	}
+	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
+		return path, &ErrAccessDenied{}
+	}
+	return path, nil
+}
 
 func CalculateDirSize(path string) (int, error) {
 	stat, err := os.Stat(path)
