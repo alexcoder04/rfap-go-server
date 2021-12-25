@@ -22,7 +22,7 @@ func WriteFile(path string, content []byte) (HeaderMetadata, []byte, error) {
 		return retError(metadata, ERROR_UNKNOWN, "Unknown error while stat"), body, err
 	}
 
-	if stat.IsDir() {
+	if err == nil && stat.IsDir() {
 		metadata.Type = "d"
 		return retError(metadata, ERROR_INVALID_FILE_TYPE, "Is a directory"), body, &ErrIsDir{}
 	}
