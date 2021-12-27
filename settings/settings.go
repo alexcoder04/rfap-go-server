@@ -1,30 +1,77 @@
 package settings
 
-import "runtime"
+import (
+	"os"
+	"runtime"
 
-const (
-	CONN_RECV_TIMEOUT_SECS = 65 // disconnect client if it sleeps for so long
-	MAX_THREADS_WAIT_SECS  = 5  // don't accept new connections for so long if max number reached
-	MAX_BYTES_SEND_AT_ONCE = 1024 * 16
-
-	VERSION_LENGTH        = 2
-	CONT_LEN_INDIC_LENGTH = 4 // length of the content length indicator in bytes
-	COMMAND_LENGTH        = 4
-	CHECKSUM_LENGTH       = 32
-
-	CONN_HOST = "localhost"
-	CONN_PORT = "6700"
-	CONN_TYPE = "tcp"
+	"github.com/sirupsen/logrus"
 )
 
-var SUPPORTED_RFAP_VERSIONS = []uint32{3}
+type ServerConfiguration struct {
+	ConnHost string
+	ConnPort string
+	ConnType string
 
-// build-time vars
-var (
-	SERVER_VERSION  = "n/a"
-	GIT_COMMIT      = "n/a"
-	BUILD_TIMESTAMP = "n/a"
-	BUILD_OS        = "n/a"
-)
+	MaxClientsPerCore int
 
-var MAX_CLIENTS = runtime.NumCPU() * 4 // 4 clients per core
+	PublicFolder string
+	LogFile      string
+
+	LogLevelStr string
+}
+
+func (config *ServerConfiguration) MaxClients() int {
+	return config.MaxClientsPerCore * runtime.NumCPU()
+}
+
+func (config *ServerConfiguration) LogLevel() logrus.Level {
+	switch config.LogLevelStr {
+	case "trace":
+		return logrus.TraceLevel
+	case "debug":
+		return logrus.DebugLevel
+	case "info":
+		return logrus.InfoLevel
+	case "warn":
+		return logrus.WarnLevel
+	case "error":
+		return logrus.ErrorLevel
+	default:
+		return logrus.InfoLevel
+	}
+}
+
+func (config *ServerConfiguration) LoadDefaultConfig() {
+	config.ConnHost = "localhost"
+	config.ConnPort = "6700"
+	config.ConnType = "tcp"
+
+	config.MaxClientsPerCore = 4
+
+	config.PublicFolder = getPublicFolder()
+	config.LogFile = getLogFile()
+
+	config.LogLevelStr = "info"
+}
+
+func (config *ServerConfiguration) ApplyEnvConfig() {
+	if connHost := os.Getenv("RFAP_CONN_HOST"); connHost != "" {
+		config.ConnHost = connHost
+	}
+	if connPort := os.Getenv("RFAP_CONN_PORT"); connPort != "" {
+		config.ConnPort = connPort
+	}
+
+	if publicFolder := os.Getenv("RFAP_PUBLIC_FOLDER"); publicFolder != "" {
+		config.PublicFolder = publicFolder
+	}
+	if logFile := os.Getenv("RFAP_LOG_FILE"); logFile != "" {
+		config.LogFile = logFile
+	}
+
+	if logLevel := os.Getenv("RFAP_LOG_LEVEL"); logLevel != "" {
+		config.LogLevelStr = logLevel
+	}
+}
+
+var Config = &ServerConfiguration{}

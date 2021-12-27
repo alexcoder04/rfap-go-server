@@ -1,8 +1,6 @@
 package settings
 
 const (
-	RFAP_VERSION = 0x0003
-
 	CMD_PING       = 0x00000000
 	CMD_DISCONNECT = 0x01000000
 	CMD_INFO       = 0xa0010000

@@ -9,8 +9,10 @@ import (
 )
 
 func Init() {
-	operationMode := os.Getenv("RFAP_MODE")
-	if operationMode == "testing" {
+	settings.Config.LoadDefaultConfig()
+	settings.Config.ApplyEnvConfig()
+
+	if settings.Config.LogFile == "[stdout]" {
 		log.InitStdoutLogger()
 	} else {
 		log.InitFileLogger()
@@ -23,7 +25,7 @@ func Init() {
 		"os":         settings.BUILD_OS,
 	}).Info("build info")
 
-	_, err := os.Stat(settings.PUBLIC_FOLDER)
+	_, err := os.Stat(settings.Config.PublicFolder)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Logger.Warning("Shared folder does not exist, creating...")
@@ -35,9 +37,9 @@ func Init() {
 }
 
 func CreateSharedFolder() {
-	err := os.MkdirAll(settings.PUBLIC_FOLDER, 0700)
+	err := os.MkdirAll(settings.Config.PublicFolder, 0700)
 	if err != nil {
 		log.Logger.Fatal("Cannot create shared folder: ", err.Error())
 	}
-	log.Logger.Warning("Created shared folder ", settings.PUBLIC_FOLDER)
+	log.Logger.Warning("Created shared folder ", settings.Config.PublicFolder)
 }

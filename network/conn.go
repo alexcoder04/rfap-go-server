@@ -66,7 +66,7 @@ func HanleConnection(conn net.Conn) {
 		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Info("connection closed")
-		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
+		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients())
 		return
 
 	case settings.CMD_INFO:

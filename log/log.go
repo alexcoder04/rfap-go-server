@@ -23,7 +23,7 @@ func InitStdoutLogger() {
 
 	Logger = &logrus.Logger{
 		Out:       os.Stdout,
-		Level:     getLogLevel(),
+		Level:     settings.Config.LogLevel(),
 		Formatter: formatter,
 	}
 }
@@ -36,11 +36,11 @@ func InitFileLogger() {
 		ForceFormatting: true,
 	}
 
-	file, err := os.OpenFile(settings.LOG_FILE, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	file, err := os.OpenFile(settings.Config.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		Logger = &logrus.Logger{
 			Out:       os.Stdout,
-			Level:     getLogLevel(),
+			Level:     settings.Config.LogLevel(),
 			Formatter: formatter,
 		}
 		Logger.Fatal("Cannot open log file")
@@ -51,21 +51,4 @@ func InitFileLogger() {
 		Formatter: formatter,
 	}
 
-}
-
-func getLogLevel() logrus.Level {
-	switch os.Getenv("RFAP_LOG_LEVEL") {
-	case "trace":
-		return logrus.TraceLevel
-	case "debug":
-		return logrus.DebugLevel
-	case "info":
-		return logrus.InfoLevel
-	case "warn":
-		return logrus.WarnLevel
-	case "error":
-		return logrus.ErrorLevel
-	default:
-		return logrus.InfoLevel
-	}
 }

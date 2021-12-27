@@ -13,9 +13,9 @@ import (
 
 func main() {
 	Init()
-	log.Logger.Info("Starting " + settings.CONN_TYPE + " server on " + settings.CONN_HOST + ":" + settings.CONN_PORT + " sharing " + settings.PUBLIC_FOLDER + "...")
+	log.Logger.Info("Starting " + settings.Config.ConnType + " server on " + settings.Config.ConnHost + ":" + settings.Config.ConnPort + " sharing " + settings.Config.PublicFolder + "...")
 
-	l, err := net.Listen(settings.CONN_TYPE, settings.CONN_HOST+":"+settings.CONN_PORT)
+	l, err := net.Listen(settings.Config.ConnType, settings.Config.ConnHost+":"+settings.Config.ConnPort)
 	if err != nil {
 		log.Logger.Fatal("Error listening: ", err.Error())
 	}
@@ -24,8 +24,8 @@ func main() {
 
 	for {
 		// wait and don't accept new connections if max number of clients already connected
-		if runtime.NumGoroutine() >= settings.MAX_CLIENTS {
-			log.Logger.Warning("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
+		if runtime.NumGoroutine() >= settings.Config.MaxClients() {
+			log.Logger.Warning("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients)
 			time.Sleep(settings.MAX_THREADS_WAIT_SECS * time.Second)
 			continue
 		}
@@ -44,6 +44,6 @@ func main() {
 		}).Info("connected, starting thread to handle...")
 
 		go network.HanleConnection(c)
-		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
+		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients)
 	}
 }

@@ -16,11 +16,11 @@ func RetError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMet
 }
 
 func validatePath(path string) (string, error) {
-	path, err := filepath.Abs(settings.PUBLIC_FOLDER + "/" + path)
+	path, err := filepath.Abs(filepath.Join(settings.Config.PublicFolder, path))
 	if err != nil {
 		return path, err
 	}
-	if !strings.HasPrefix(path, settings.PUBLIC_FOLDER) {
+	if !strings.HasPrefix(path, settings.Config.PublicFolder) {
 		return path, &ErrAccessDenied{}
 	}
 	return path, nil

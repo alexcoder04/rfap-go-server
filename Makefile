@@ -21,11 +21,11 @@ windows:
 		 -o $(WINDOWS_OUT)
 
 run:
-	RFAP_MODE=testing RFAP_LOG_LEVEL=trace\
+	RFAP_LOG_FILE=[stdout] RFAP_LOG_LEVEL=trace\
 		go run -ldflags $(LDFLAGS) .
 
 run-quiet:
-	RFAP_MODE=testing RFAP_LOG_LEVEL=info\
+	RFAP_LOG_FILE=[stdout] RFAP_LOG_LEVEL=info\
 		go run -ldflags $(LDFLAGS) .
 
 install:
