@@ -17,12 +17,9 @@ func DeleteFile(path string) (utils.HeaderMetadata, []byte, error) {
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
 	}
 
-	stat, err := os.Stat(path)
+	errCode, errMsg, stat, err := utils.CheckFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "File does not exist"), body, err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 
 	if stat.IsDir() {
@@ -50,12 +47,9 @@ func DeleteDirectory(path string) (utils.HeaderMetadata, []byte, error) {
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
 	}
 
-	stat, err := os.Stat(path)
+	errCode, errMsg, stat, err := utils.CheckFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "Folder does not exist"), body, err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 
 	if !stat.IsDir() {

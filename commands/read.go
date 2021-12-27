@@ -2,7 +2,6 @@ package commands
 
 import (
 	"io/ioutil"
-	"os"
 
 	"github.com/alexcoder04/rfap-go-server/settings"
 	"github.com/alexcoder04/rfap-go-server/utils"
@@ -19,12 +18,9 @@ func Info(path string, requestDetails []string) (utils.HeaderMetadata, []byte, e
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this folder"), body, err
 	}
 
-	stat, err := os.Stat(path)
+	errCode, errMsg, stat, err := utils.CheckFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), body, err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 
 	metadata.Modified = int(stat.ModTime().Unix())
@@ -72,12 +68,9 @@ func ReadFile(path string) (utils.HeaderMetadata, []byte, error) {
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
 	}
 
-	stat, err := os.Stat(path)
+	errCode, errMsg, stat, err := utils.CheckFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), make([]byte, 0), err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat file"), make([]byte, 0), err
+		return utils.RetError(metadata, errCode, errMsg), make([]byte, 0), err
 	}
 
 	if stat.IsDir() {
@@ -108,12 +101,9 @@ func ReadDirectory(path string, requestDetails []string) (utils.HeaderMetadata, 
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
 	}
 
-	stat, err := os.Stat(path)
+	errCode, errMsg, stat, err := utils.CheckFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "Folder does not exist"), make([]byte, 0), err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), make([]byte, 0), err
+		return utils.RetError(metadata, errCode, errMsg), make([]byte, 0), err
 	}
 
 	if !stat.Mode().IsDir() {

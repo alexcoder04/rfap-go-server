@@ -18,18 +18,14 @@ func CopyFile(source string, destin string, move bool) (utils.HeaderMetadata, []
 	if err != nil {
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
 	}
-
 	destin, err = utils.ValidatePath(destin)
 	if err != nil {
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, &utils.ErrAccessDenied{}
 	}
 
-	stat, err := os.Stat(source)
+	errCode, errMsg, stat, err := utils.CheckFile(source)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), body, err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 	if stat.IsDir() {
 		metadata.Type = "d"
@@ -79,12 +75,9 @@ func CopyDirectory(source string, destin string, move bool) (utils.HeaderMetadat
 		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, &utils.ErrAccessDenied{}
 	}
 
-	stat, err := os.Stat(source)
+	errCode, errMsg, stat, err := utils.CheckFile(source)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return utils.RetError(metadata, settings.ERROR_FILE_NOT_EXISTS, "File or folder does not exist"), body, err
-		}
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 	if !stat.IsDir() {
 		metadata.Type = "f"

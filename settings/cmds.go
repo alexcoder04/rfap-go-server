@@ -29,4 +29,5 @@ const (
 	ERROR_ACCESS_DENIED       = 5
 	ERROR_INVALID_CONTENT_LEN = 6
 	ERROR_FILE_EXISTS         = 7
+	ERROR_WHILE_STAT          = 8
 )

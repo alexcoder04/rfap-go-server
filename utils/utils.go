@@ -26,6 +26,17 @@ func ValidatePath(path string) (string, error) {
 	return path, nil
 }
 
+func CheckFile(path string) (int, string, os.FileInfo, error) {
+	stat, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return settings.ERROR_FILE_NOT_EXISTS, "File or folder does not exist", stat, err
+		}
+		return settings.ERROR_WHILE_STAT, "Unknown error while stat", stat, err
+	}
+	return settings.ERROR_OK, "", stat, nil
+}
+
 func CalculateDirSize(path string) (int, error) {
 	stat, err := os.Stat(path)
 	if err != nil {
