@@ -6,11 +6,12 @@ import (
 
 	"github.com/alexcoder04/rfap-go-server/log"
 	"github.com/alexcoder04/rfap-go-server/settings"
+	"github.com/alexcoder04/rfap-go-server/utils"
 	"github.com/sirupsen/logrus"
 )
 
 func CleanErrorDisconnect(conn net.Conn) {
-	header := HeaderMetadata{}
+	header := utils.HeaderMetadata{}
 	err := SendPacket(conn, settings.CMD_ERROR, header, make([]byte, 0))
 	if err != nil {
 		log.Logger.WithFields(logrus.Fields{
@@ -24,7 +25,7 @@ func CleanErrorDisconnect(conn net.Conn) {
 	log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
 }
 
-func RunCommand(conn net.Conn, header HeaderMetadata, cmd int, commandName string, fn commandExec) {
+func RunCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName string, fn utils.CommandExec) {
 	log.Logger.WithFields(logrus.Fields{
 		"client":  conn.RemoteAddr().String(),
 		"command": commandName,
@@ -43,7 +44,7 @@ func RunCommand(conn net.Conn, header HeaderMetadata, cmd int, commandName strin
 	}
 }
 
-func RunCopyCommand(conn net.Conn, header HeaderMetadata, cmd int, commandName string, fn copySommandExec, move bool) {
+func RunCopyCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName string, fn utils.CopySommandExec, move bool) {
 	log.Logger.WithFields(logrus.Fields{
 		"client":  conn.RemoteAddr().String(),
 		"command": commandName,

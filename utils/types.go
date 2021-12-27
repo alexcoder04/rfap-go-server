@@ -1,4 +1,4 @@
-package main
+package utils
 
 type HeaderMetadata struct {
 	ErrorCode    int    `yaml:"ErrorCode"`
@@ -18,9 +18,9 @@ type HeaderMetadata struct {
 	ElementsNumber int `yaml:"ElementsNumber"`
 }
 
-type commandExec func(string) (HeaderMetadata, []byte, error)
+type CommandExec func(string) (HeaderMetadata, []byte, error)
 
-type copySommandExec func(string, string, bool) (HeaderMetadata, []byte, error)
+type CopySommandExec func(string, string, bool) (HeaderMetadata, []byte, error)
 
 type ErrUnsupportedRfapVersion struct{}
 

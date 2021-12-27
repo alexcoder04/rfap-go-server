@@ -6,20 +6,21 @@ import (
 
 	"github.com/alexcoder04/rfap-go-server/log"
 	"github.com/alexcoder04/rfap-go-server/settings"
+	"github.com/alexcoder04/rfap-go-server/utils"
 	"github.com/sirupsen/logrus"
 )
 
 func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
 	if err != nil {
-		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
+		if _, ok := err.(*utils.ErrUnsupportedRfapVersion); ok {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("rfap version ", version, " unsupported ")
 			CleanErrorDisconnect(conn)
 			return
 		}
-		if _, ok := err.(*ErrClientCrashed); ok {
+		if _, ok := err.(*utils.ErrClientCrashed); ok {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("client crashed")
@@ -41,7 +42,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "ping",
 		}).Info("packet: ping")
-		err := SendPacket(conn, settings.CMD_PING+1, HeaderMetadata{}, make([]byte, 0))
+		err := SendPacket(conn, settings.CMD_PING+1, utils.HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -54,7 +55,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "disconnect",
 		}).Info("packet: disconnect")
-		err := SendPacket(conn, settings.CMD_DISCONNECT+1, HeaderMetadata{}, make([]byte, 0))
+		err := SendPacket(conn, settings.CMD_DISCONNECT+1, utils.HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -175,7 +176,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "unknown",
 		}).Warning("packet: unknown command")
-		metadata := HeaderMetadata{}
+		metadata := utils.HeaderMetadata{}
 		metadata.ErrorCode = settings.ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
 		err := SendPacket(conn, settings.CMD_ERROR+1, metadata, make([]byte, 0))

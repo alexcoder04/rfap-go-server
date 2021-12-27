@@ -8,11 +8,12 @@ import (
 
 	"github.com/alexcoder04/rfap-go-server/log"
 	"github.com/alexcoder04/rfap-go-server/settings"
+	"github.com/alexcoder04/rfap-go-server/utils"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
-func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte) error {
+func SendPacket(conn net.Conn, command int, metadata utils.HeaderMetadata, body []byte) error {
 	// version
 	version := make([]byte, settings.VERSION_LENGTH)
 	binary.BigEndian.PutUint16(version, settings.RFAP_VERSION)
@@ -30,7 +31,7 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 		"client": conn.RemoteAddr().String(),
 	}).Trace("header length: ", len(metadataBytes))
 	if len(metadataBytes) > (1024 * 8) {
-		return &ErrInvalidContentLength{}
+		return &utils.ErrInvalidContentLength{}
 	}
 
 	// header length
@@ -39,10 +40,10 @@ func SendPacket(conn net.Conn, command int, metadata HeaderMetadata, body []byte
 	binary.BigEndian.PutUint32(headerLengthBytes, headerLength)
 
 	// checksum
-	headerChecksum := sha256.Sum256(ConcatBytes(commandBytes, metadataBytes))
+	headerChecksum := sha256.Sum256(utils.ConcatBytes(commandBytes, metadataBytes))
 
 	// send header
-	firstPart := ConcatBytes(version, headerLengthBytes, commandBytes, metadataBytes, headerChecksum[:])
+	firstPart := utils.ConcatBytes(version, headerLengthBytes, commandBytes, metadataBytes, headerChecksum[:])
 	_, err = conn.Write(firstPart)
 	if err != nil {
 		return err

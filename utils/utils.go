@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"io/ioutil"
@@ -9,7 +9,7 @@ import (
 	"github.com/alexcoder04/rfap-go-server/settings"
 )
 
-func retError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMetadata {
+func RetError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMetadata {
 	metadata.ErrorCode = errorCode
 	metadata.ErrorMessage = errorMsg
 	return metadata
