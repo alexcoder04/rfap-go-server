@@ -1,7 +1,7 @@
 
-LINUX_OUT = ../build/rfap-go-server_linux_amd64
-RASPBERRY_OUT = ../build/rfap-go-server_linux_arm
-WINDOWS_OUT = ../build/rfap-go-server_windows_amd64.exe
+LINUX_OUT = build/rfap-go-server_linux_amd64
+RASPBERRY_OUT = build/rfap-go-server_linux_arm
+WINDOWS_OUT = build/rfap-go-server_windows_amd64.exe
 
 BUILD_TIMESTAMP = $(shell date --utc "+%Y.%m.%d-%H:%M:%S")
 GIT_COMMIT = $(shell git rev-list -1 HEAD)
