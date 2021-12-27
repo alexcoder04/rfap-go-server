@@ -1,4 +1,4 @@
-package main
+package settings
 
 const (
 	RFAP_VERSION = 0x0003

@@ -1,4 +1,4 @@
-package main
+package settings
 
 import "runtime"
 
@@ -12,9 +12,9 @@ const (
 	COMMAND_LENGTH        = 4
 	CHECKSUM_LENGTH       = 32
 
-	connHost = "localhost"
-	connPort = "6700"
-	connType = "tcp"
+	CONN_HOST = "localhost"
+	CONN_PORT = "6700"
+	CONN_TYPE = "tcp"
 )
 
 var SUPPORTED_RFAP_VERSIONS = []uint32{3}

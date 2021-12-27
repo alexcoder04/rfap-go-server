@@ -4,6 +4,8 @@ import (
 	"net"
 	"runtime"
 
+	"github.com/alexcoder04/rfap-go-server/log"
+	"github.com/alexcoder04/rfap-go-server/settings"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,20 +13,20 @@ func HanleConnection(conn net.Conn) {
 	version, command, header, body, err := RecvPacket(conn)
 	if err != nil {
 		if _, ok := err.(*ErrUnsupportedRfapVersion); ok {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("rfap version ", version, " unsupported ")
 			CleanErrorDisconnect(conn)
 			return
 		}
 		if _, ok := err.(*ErrClientCrashed); ok {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("client crashed")
 			CleanErrorDisconnect(conn)
 			return
 		}
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Error("error recieving packet: ", err.Error())
 		CleanErrorDisconnect(conn)
@@ -34,151 +36,151 @@ func HanleConnection(conn net.Conn) {
 	switch command {
 
 	// server commands
-	case CMD_PING:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_PING:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "ping",
 		}).Info("packet: ping")
-		err := SendPacket(conn, CMD_PING+1, HeaderMetadata{}, make([]byte, 0))
+		err := SendPacket(conn, settings.CMD_PING+1, HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to ping: ", err.Error())
 		}
 		break
 
-	case CMD_DISCONNECT:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_DISCONNECT:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "disconnect",
 		}).Info("packet: disconnect")
-		err := SendPacket(conn, CMD_DISCONNECT+1, HeaderMetadata{}, make([]byte, 0))
+		err := SendPacket(conn, settings.CMD_DISCONNECT+1, HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to disconnect: ", err.Error())
 		}
 		conn.Close()
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Info("connection closed")
-		logger.Info("running threads: ", runtime.NumGoroutine(), "/", MAX_CLIENTS)
+		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
 		return
 
-	case CMD_INFO:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_INFO:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
 		data, respBody, err := Info(header.Path, header.RequestDetails)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error info on file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, CMD_INFO+1, data, respBody)
+		err = SendPacket(conn, settings.CMD_INFO+1, data, respBody)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to info: ", err.Error())
 		}
 		break
 
-	case CMD_ERROR:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_ERROR:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "error",
 		}).Warning("packet: error ", header.ErrorCode)
 		break
 
 	// file commands
-	case CMD_FILE_READ:
-		RunCommand(conn, header, CMD_FILE_READ, "file_read", ReadFile)
+	case settings.CMD_FILE_READ:
+		RunCommand(conn, header, settings.CMD_FILE_READ, "file_read", ReadFile)
 		break
 
-	case CMD_FILE_DELETE:
-		RunCommand(conn, header, CMD_FILE_DELETE, "file_delete", DeleteFile)
+	case settings.CMD_FILE_DELETE:
+		RunCommand(conn, header, settings.CMD_FILE_DELETE, "file_delete", DeleteFile)
 		break
 
-	case CMD_FILE_CREATE:
-		RunCommand(conn, header, CMD_FILE_CREATE, "file_create", CreateFile)
+	case settings.CMD_FILE_CREATE:
+		RunCommand(conn, header, settings.CMD_FILE_CREATE, "file_create", CreateFile)
 		break
 
-	case CMD_FILE_COPY:
-		RunCopyCommand(conn, header, CMD_FILE_COPY, "file_copy", CopyFile, false)
+	case settings.CMD_FILE_COPY:
+		RunCopyCommand(conn, header, settings.CMD_FILE_COPY, "file_copy", CopyFile, false)
 		break
 
-	case CMD_FILE_MOVE:
-		RunCopyCommand(conn, header, CMD_FILE_MOVE, "file_move", CopyFile, true)
+	case settings.CMD_FILE_MOVE:
+		RunCopyCommand(conn, header, settings.CMD_FILE_MOVE, "file_move", CopyFile, true)
 		break
 
-	case CMD_FILE_WRITE:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_FILE_WRITE:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "file_write",
 		}).Info("packet: write file ", header.Path)
 		metadata, respBody, err := WriteFile(header.Path, body)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error writing file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, CMD_FILE_WRITE+1, metadata, respBody)
+		err = SendPacket(conn, settings.CMD_FILE_WRITE+1, metadata, respBody)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to file_write: ", err.Error())
 		}
 		break
 
 	// directory commands
-	case CMD_DIRECTORY_READ:
-		logger.WithFields(logrus.Fields{
+	case settings.CMD_DIRECTORY_READ:
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "directory_read",
 		}).Info("packet: read directory ", header.Path)
 		metadata, content, err := ReadDirectory(header.Path, header.RequestDetails)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error reading dir ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, CMD_DIRECTORY_READ+1, metadata, content)
+		err = SendPacket(conn, settings.CMD_DIRECTORY_READ+1, metadata, content)
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to directory_read: ", err.Error())
 		}
 		break
 
-	case CMD_DIRECTORY_DELETE:
-		RunCommand(conn, header, CMD_DIRECTORY_DELETE, "directory_delete", DeleteDirectory)
+	case settings.CMD_DIRECTORY_DELETE:
+		RunCommand(conn, header, settings.CMD_DIRECTORY_DELETE, "directory_delete", DeleteDirectory)
 		break
 
-	case CMD_DIRECTORY_CREATE:
-		RunCommand(conn, header, CMD_DIRECTORY_CREATE, "directory_create", CreateDirectory)
+	case settings.CMD_DIRECTORY_CREATE:
+		RunCommand(conn, header, settings.CMD_DIRECTORY_CREATE, "directory_create", CreateDirectory)
 		break
 
-	case CMD_DIRECTORY_COPY:
-		RunCopyCommand(conn, header, CMD_DIRECTORY_COPY, "directory_copy", CopyDirectory, false)
+	case settings.CMD_DIRECTORY_COPY:
+		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_COPY, "directory_copy", CopyDirectory, false)
 		break
 
-	case CMD_DIRECTORY_MOVE:
-		RunCopyCommand(conn, header, CMD_DIRECTORY_MOVE, "directory_move", CopyDirectory, true)
+	case settings.CMD_DIRECTORY_MOVE:
+		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_MOVE, "directory_move", CopyDirectory, true)
 		break
 
 	// unknown command
 	default:
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client":  conn.RemoteAddr().String(),
 			"command": "unknown",
 		}).Warning("packet: unknown command")
 		metadata := HeaderMetadata{}
-		metadata.ErrorCode = ERROR_INVALID_COMMAND
+		metadata.ErrorCode = settings.ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
-		err := SendPacket(conn, CMD_ERROR+1, metadata, make([]byte, 0))
+		err := SendPacket(conn, settings.CMD_ERROR+1, metadata, make([]byte, 0))
 		if err != nil {
-			logger.WithFields(logrus.Fields{
+			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("error while response to unknown packet: ", err.Error())
 		}

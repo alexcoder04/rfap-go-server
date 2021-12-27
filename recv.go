@@ -8,14 +8,16 @@ import (
 	"net"
 	"time"
 
+	"github.com/alexcoder04/rfap-go-server/log"
+	"github.com/alexcoder04/rfap-go-server/settings"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	// version
-	versionBytes := make([]byte, VERSION_LENGTH)
-	err := conn.SetReadDeadline(time.Now().Add(CONN_RECV_TIMEOUT_SECS * time.Second))
+	versionBytes := make([]byte, settings.VERSION_LENGTH)
+	err := conn.SetReadDeadline(time.Now().Add(settings.CONN_RECV_TIMEOUT_SECS * time.Second))
 	if err != nil {
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), &ErrSetReadTimeoutFailed{}
 	}
@@ -27,19 +29,19 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 		return 0, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 	version := uint32(binary.BigEndian.Uint16(versionBytes))
-	logger.Debug("version:", version)
-	if !Uint32ArrayContains(SUPPORTED_RFAP_VERSIONS, version) {
+	log.Logger.Debug("version:", version)
+	if !Uint32ArrayContains(settings.SUPPORTED_RFAP_VERSIONS, version) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrUnsupportedRfapVersion{}
 	}
 
 	// header length
-	headerLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
+	headerLengthBytes := make([]byte, settings.CONT_LEN_INDIC_LENGTH)
 	_, err = conn.Read(headerLengthBytes[:])
 	if err != nil {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 	headerLength := binary.BigEndian.Uint32(headerLengthBytes)
-	logger.Debug("header length: ", headerLength, ":0x", hex.EncodeToString(headerLengthBytes))
+	log.Logger.Debug("header length: ", headerLength, ":0x", hex.EncodeToString(headerLengthBytes))
 	if headerLength > (1024 * 8) {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrInvalidContentLength{}
 	}
@@ -53,29 +55,29 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 
 	// command
 	command := binary.BigEndian.Uint32(headerRaw[:4])
-	logger.Debug("command: 0x" + hex.EncodeToString(headerRaw[:4]))
+	log.Logger.Debug("command: 0x" + hex.EncodeToString(headerRaw[:4]))
 
 	// metadata
 	headerBytes := headerRaw[4 : len(headerRaw)-32]
-	logger.Debug("header:", hex.EncodeToString(headerBytes))
+	log.Logger.Debug("header:", hex.EncodeToString(headerBytes))
 
 	// header checksum
 	headerChecksum := headerRaw[len(headerRaw)-32:]
 	headerChecksumExpected := sha256.Sum256(headerRaw[:len(headerRaw)-32])
 	if !bytes.Equal(headerChecksum, headerChecksumExpected[:]) {
-		logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
-		logger.Debug("header checksum expected:", hex.EncodeToString(headerChecksumExpected[:]))
+		log.Logger.Debug("header checksum:", hex.EncodeToString(headerChecksum))
+		log.Logger.Debug("header checksum expected:", hex.EncodeToString(headerChecksumExpected[:]))
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrChecksumsNotMatching{}
 	}
 
 	// body length
-	bodyLengthBytes := make([]byte, CONT_LEN_INDIC_LENGTH)
+	bodyLengthBytes := make([]byte, settings.CONT_LEN_INDIC_LENGTH)
 	_, err = conn.Read(bodyLengthBytes[:])
 	if err != nil {
 		return version, 0, HeaderMetadata{}, make([]byte, 0), err
 	}
 	bodyLength := binary.BigEndian.Uint32(bodyLengthBytes)
-	logger.Debug("body length:", bodyLength)
+	log.Logger.Debug("body length:", bodyLength)
 
 	bodyRaw := make([]byte, bodyLength)
 	// TODO recv in loop, body_length may be very big
@@ -87,10 +89,10 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	bodyChecksum := bodyRaw[len(bodyRaw)-32:]
 	bodyChecksumExpected := sha256.Sum256(body)
 	if !bytes.Equal(bodyChecksum, bodyChecksumExpected[:]) {
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Debug("body checksum: ", hex.EncodeToString(bodyChecksum))
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Debug("body checksum expected: ", hex.EncodeToString(bodyChecksumExpected[:]))
 		return version, 0, HeaderMetadata{}, make([]byte, 0), &ErrChecksumsNotMatching{}
@@ -100,7 +102,7 @@ func RecvPacket(conn net.Conn) (uint32, uint32, HeaderMetadata, []byte, error) {
 	header := HeaderMetadata{}
 	err = yaml.Unmarshal(headerRaw[4:len(headerRaw)-32], &header)
 	if err != nil {
-		logger.WithFields(logrus.Fields{
+		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Error("error decoding metadata")
 		return version, command, HeaderMetadata{}, body, err

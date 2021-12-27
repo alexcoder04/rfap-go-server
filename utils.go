@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/alexcoder04/rfap-go-server/settings"
 )
 
 func retError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMetadata {
@@ -14,11 +16,11 @@ func retError(metadata HeaderMetadata, errorCode int, errorMsg string) HeaderMet
 }
 
 func ValidatePath(path string) (string, error) {
-	path, err := filepath.Abs(PUBLIC_FOLDER + "/" + path)
+	path, err := filepath.Abs(settings.PUBLIC_FOLDER + "/" + path)
 	if err != nil {
 		return path, err
 	}
-	if !strings.HasPrefix(path, PUBLIC_FOLDER) {
+	if !strings.HasPrefix(path, settings.PUBLIC_FOLDER) {
 		return path, &ErrAccessDenied{}
 	}
 	return path, nil
