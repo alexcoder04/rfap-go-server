@@ -4,6 +4,7 @@ import (
 	"net"
 	"runtime"
 
+	"github.com/alexcoder04/rfap-go-server/commands"
 	"github.com/alexcoder04/rfap-go-server/log"
 	"github.com/alexcoder04/rfap-go-server/settings"
 	"github.com/alexcoder04/rfap-go-server/utils"
@@ -73,7 +74,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "info",
 		}).Info("packet: info on ", header.Path)
-		data, respBody, err := Info(header.Path, header.RequestDetails)
+		data, respBody, err := commands.Info(header.Path, header.RequestDetails)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -96,23 +97,23 @@ func HanleConnection(conn net.Conn) {
 
 	// file commands
 	case settings.CMD_FILE_READ:
-		RunCommand(conn, header, settings.CMD_FILE_READ, "file_read", ReadFile)
+		RunCommand(conn, header, settings.CMD_FILE_READ, "file_read", commands.ReadFile)
 		break
 
 	case settings.CMD_FILE_DELETE:
-		RunCommand(conn, header, settings.CMD_FILE_DELETE, "file_delete", DeleteFile)
+		RunCommand(conn, header, settings.CMD_FILE_DELETE, "file_delete", commands.DeleteFile)
 		break
 
 	case settings.CMD_FILE_CREATE:
-		RunCommand(conn, header, settings.CMD_FILE_CREATE, "file_create", CreateFile)
+		RunCommand(conn, header, settings.CMD_FILE_CREATE, "file_create", commands.CreateFile)
 		break
 
 	case settings.CMD_FILE_COPY:
-		RunCopyCommand(conn, header, settings.CMD_FILE_COPY, "file_copy", CopyFile, false)
+		RunCopyCommand(conn, header, settings.CMD_FILE_COPY, "file_copy", commands.CopyFile, false)
 		break
 
 	case settings.CMD_FILE_MOVE:
-		RunCopyCommand(conn, header, settings.CMD_FILE_MOVE, "file_move", CopyFile, true)
+		RunCopyCommand(conn, header, settings.CMD_FILE_MOVE, "file_move", commands.CopyFile, true)
 		break
 
 	case settings.CMD_FILE_WRITE:
@@ -120,7 +121,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "file_write",
 		}).Info("packet: write file ", header.Path)
-		metadata, respBody, err := WriteFile(header.Path, body)
+		metadata, respBody, err := commands.WriteFile(header.Path, body)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -140,7 +141,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "directory_read",
 		}).Info("packet: read directory ", header.Path)
-		metadata, content, err := ReadDirectory(header.Path, header.RequestDetails)
+		metadata, content, err := commands.ReadDirectory(header.Path, header.RequestDetails)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -155,19 +156,19 @@ func HanleConnection(conn net.Conn) {
 		break
 
 	case settings.CMD_DIRECTORY_DELETE:
-		RunCommand(conn, header, settings.CMD_DIRECTORY_DELETE, "directory_delete", DeleteDirectory)
+		RunCommand(conn, header, settings.CMD_DIRECTORY_DELETE, "directory_delete", commands.DeleteDirectory)
 		break
 
 	case settings.CMD_DIRECTORY_CREATE:
-		RunCommand(conn, header, settings.CMD_DIRECTORY_CREATE, "directory_create", CreateDirectory)
+		RunCommand(conn, header, settings.CMD_DIRECTORY_CREATE, "directory_create", commands.CreateDirectory)
 		break
 
 	case settings.CMD_DIRECTORY_COPY:
-		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_COPY, "directory_copy", CopyDirectory, false)
+		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_COPY, "directory_copy", commands.CopyDirectory, false)
 		break
 
 	case settings.CMD_DIRECTORY_MOVE:
-		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_MOVE, "directory_move", CopyDirectory, true)
+		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_MOVE, "directory_move", commands.CopyDirectory, true)
 		break
 
 	// unknown command
