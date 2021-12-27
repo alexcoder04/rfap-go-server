@@ -13,12 +13,7 @@ func Info(path string, requestDetails []string) (utils.HeaderMetadata, []byte, e
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this folder"), body, err
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(path)
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
@@ -63,12 +58,7 @@ func ReadFile(path string) (utils.HeaderMetadata, []byte, error) {
 	metadata := utils.HeaderMetadata{}
 	metadata.Path = path
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(path)
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), make([]byte, 0), err
 	}
@@ -96,12 +86,7 @@ func ReadDirectory(path string, requestDetails []string) (utils.HeaderMetadata, 
 	metadata := utils.HeaderMetadata{}
 	metadata.Path = path
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), make([]byte, 0), err
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(path)
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), make([]byte, 0), err
 	}

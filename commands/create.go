@@ -12,16 +12,14 @@ func CreateFile(path string) (utils.HeaderMetadata, []byte, error) {
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
+	errCode, errMsg, path, _, err := utils.CheckFile(path)
+	if errCode == settings.ERROR_ACCESS_DENIED {
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
-
-	_, err = os.Stat(path)
-	if err == nil {
+	if errCode == settings.ERROR_OK {
 		return utils.RetError(metadata, settings.ERROR_FILE_EXISTS, "File already exists"), body, os.ErrExist
 	}
-	if !os.IsNotExist(err) {
+	if errCode != settings.ERROR_FILE_NOT_EXISTS {
 		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat file"), body, err
 	}
 
@@ -41,16 +39,14 @@ func CreateDirectory(path string) (utils.HeaderMetadata, []byte, error) {
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
+	errCode, errMsg, path, _, err := utils.CheckFile(path)
+	if errCode == settings.ERROR_ACCESS_DENIED {
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
-
-	_, err = os.Stat(path)
-	if err == nil {
+	if errCode == settings.ERROR_OK {
 		return utils.RetError(metadata, settings.ERROR_FILE_EXISTS, "File already exists"), body, os.ErrExist
 	}
-	if !os.IsNotExist(err) {
+	if errCode != settings.ERROR_FILE_NOT_EXISTS {
 		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat file"), body, err
 	}
 

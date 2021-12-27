@@ -12,7 +12,7 @@ import (
 
 func cleanErrorDisconnect(conn net.Conn) {
 	header := utils.HeaderMetadata{}
-	err := SendPacket(conn, settings.CMD_ERROR, header, make([]byte, 0))
+	err := sendPacket(conn, settings.CMD_ERROR, header, make([]byte, 0))
 	if err != nil {
 		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
@@ -36,7 +36,7 @@ func runCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName
 			"client": conn.RemoteAddr().String(),
 		}).Warning("error ", commandName, " ", header.Path, ": ", err.Error())
 	}
-	err = SendPacket(conn, cmd+1, metadata, content)
+	err = sendPacket(conn, cmd+1, metadata, content)
 	if err != nil {
 		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
@@ -55,7 +55,7 @@ func runCopyCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, command
 			"client": conn.RemoteAddr().String(),
 		}).Warning("error ", commandName, " ", header.Path, ": ", err.Error())
 	}
-	err = SendPacket(conn, cmd+1, metadata, content)
+	err = sendPacket(conn, cmd+1, metadata, content)
 	if err != nil {
 		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),

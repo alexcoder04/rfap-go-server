@@ -12,12 +12,7 @@ func DeleteFile(path string) (utils.HeaderMetadata, []byte, error) {
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(path)
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
@@ -42,12 +37,7 @@ func DeleteDirectory(path string) (utils.HeaderMetadata, []byte, error) {
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(path)
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), body, err
 	}

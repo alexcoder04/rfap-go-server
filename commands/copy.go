@@ -14,30 +14,18 @@ func CopyFile(source string, destin string, move bool) (utils.HeaderMetadata, []
 	metadata.Path = source
 	body := make([]byte, 0)
 
-	source, err := utils.ValidatePath(source)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
-	}
-	destin, err = utils.ValidatePath(destin)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, &utils.ErrAccessDenied{}
+	errCode, errMsg, destin, _, err := utils.CheckFile(destin)
+	if errCode == settings.ERROR_ACCESS_DENIED {
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 
-	errCode, errMsg, stat, err := utils.CheckFile(source)
+	errCode, errMsg, source, stat, err := utils.CheckFile(source)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 	if stat.IsDir() {
 		metadata.Type = "d"
 		return utils.RetError(metadata, settings.ERROR_INVALID_FILE_TYPE, "Is a directory"), body, &utils.ErrIsDir{}
-	}
-
-	_, err = os.Stat(destin)
-	if err == nil {
-		return utils.RetError(metadata, settings.ERROR_FILE_EXISTS, "File already exists"), body, os.ErrExist
-	}
-	if !os.IsNotExist(err) {
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat file"), body, err
 	}
 
 	bytesRead, err := ioutil.ReadFile(source)
@@ -65,31 +53,18 @@ func CopyDirectory(source string, destin string, move bool) (utils.HeaderMetadat
 	metadata.Path = source
 	body := make([]byte, 0)
 
-	source, err := utils.ValidatePath(source)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access this file"), body, err
+	errCode, errMsg, destin, _, err := utils.CheckFile(destin)
+	if errCode == settings.ERROR_ACCESS_DENIED {
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 
-	destin, err = utils.ValidatePath(destin)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, &utils.ErrAccessDenied{}
-	}
-
-	errCode, errMsg, stat, err := utils.CheckFile(source)
+	errCode, errMsg, source, stat, err := utils.CheckFile(source)
 	if err != nil {
 		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
 	if !stat.IsDir() {
 		metadata.Type = "f"
 		return utils.RetError(metadata, settings.ERROR_INVALID_FILE_TYPE, "Is not a directory"), body, &utils.ErrIsNotDir{}
-	}
-
-	_, err = os.Stat(destin)
-	if err == nil {
-		return utils.RetError(metadata, settings.ERROR_FILE_EXISTS, "File already exists"), body, os.ErrExist
-	}
-	if !os.IsNotExist(err) {
-		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat file"), body, err
 	}
 
 	err = copy.Copy(source, destin)

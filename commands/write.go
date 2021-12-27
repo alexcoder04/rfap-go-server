@@ -14,17 +14,15 @@ func WriteFile(path string, content []byte) (utils.HeaderMetadata, []byte, error
 	metadata.Path = path
 	body := make([]byte, 0)
 
-	path, err := utils.ValidatePath(path)
-	if err != nil {
-		return utils.RetError(metadata, settings.ERROR_ACCESS_DENIED, "You are not permitted to access to this file"), body, err
+	errCode, errMsg, path, stat, err := utils.CheckFile(path)
+	if errCode == settings.ERROR_ACCESS_DENIED {
+		return utils.RetError(metadata, errCode, errMsg), body, err
 	}
-
-	stat, err := os.Stat(path)
-	if err != nil && !os.IsNotExist(err) {
+	if errCode != settings.ERROR_OK && errCode != settings.ERROR_FILE_NOT_EXISTS {
 		return utils.RetError(metadata, settings.ERROR_UNKNOWN, "Unknown error while stat"), body, err
 	}
 
-	if err == nil && stat.IsDir() {
+	if errCode == settings.ERROR_OK && stat.IsDir() {
 		metadata.Type = "d"
 		return utils.RetError(metadata, settings.ERROR_INVALID_FILE_TYPE, "Is a directory"), body, &utils.ErrIsDir{}
 	}
