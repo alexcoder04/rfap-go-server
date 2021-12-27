@@ -1,4 +1,4 @@
-package main
+package network
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RecvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, error) {
+func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, error) {
 	// version
 	versionBytes := make([]byte, settings.VERSION_LENGTH)
 	err := conn.SetReadDeadline(time.Now().Add(settings.CONN_RECV_TIMEOUT_SECS * time.Second))

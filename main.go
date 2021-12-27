@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alexcoder04/rfap-go-server/log"
+	"github.com/alexcoder04/rfap-go-server/network"
 	"github.com/alexcoder04/rfap-go-server/settings"
 	"github.com/sirupsen/logrus"
 )
@@ -42,7 +43,7 @@ func main() {
 			"client": c.RemoteAddr().String(),
 		}).Info("connected, starting thread to handle...")
 
-		go HanleConnection(c)
+		go network.HanleConnection(c)
 		log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.MAX_CLIENTS)
 	}
 }

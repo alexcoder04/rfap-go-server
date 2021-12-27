@@ -1,4 +1,4 @@
-package main
+package network
 
 import (
 	"net"
@@ -12,26 +12,26 @@ import (
 )
 
 func HanleConnection(conn net.Conn) {
-	version, command, header, body, err := RecvPacket(conn)
+	version, command, header, body, err := recvPacket(conn)
 	if err != nil {
 		if _, ok := err.(*utils.ErrUnsupportedRfapVersion); ok {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("rfap version ", version, " unsupported ")
-			CleanErrorDisconnect(conn)
+			cleanErrorDisconnect(conn)
 			return
 		}
 		if _, ok := err.(*utils.ErrClientCrashed); ok {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
 			}).Error("client crashed")
-			CleanErrorDisconnect(conn)
+			cleanErrorDisconnect(conn)
 			return
 		}
 		log.Logger.WithFields(logrus.Fields{
 			"client": conn.RemoteAddr().String(),
 		}).Error("error recieving packet: ", err.Error())
-		CleanErrorDisconnect(conn)
+		cleanErrorDisconnect(conn)
 		return
 	}
 
@@ -43,7 +43,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "ping",
 		}).Info("packet: ping")
-		err := SendPacket(conn, settings.CMD_PING+1, utils.HeaderMetadata{}, make([]byte, 0))
+		err := sendPacket(conn, settings.CMD_PING+1, utils.HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -56,7 +56,7 @@ func HanleConnection(conn net.Conn) {
 			"client":  conn.RemoteAddr().String(),
 			"command": "disconnect",
 		}).Info("packet: disconnect")
-		err := SendPacket(conn, settings.CMD_DISCONNECT+1, utils.HeaderMetadata{}, make([]byte, 0))
+		err := sendPacket(conn, settings.CMD_DISCONNECT+1, utils.HeaderMetadata{}, make([]byte, 0))
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -80,7 +80,7 @@ func HanleConnection(conn net.Conn) {
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error info on file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, settings.CMD_INFO+1, data, respBody)
+		err = sendPacket(conn, settings.CMD_INFO+1, data, respBody)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -97,23 +97,23 @@ func HanleConnection(conn net.Conn) {
 
 	// file commands
 	case settings.CMD_FILE_READ:
-		RunCommand(conn, header, settings.CMD_FILE_READ, "file_read", commands.ReadFile)
+		runCommand(conn, header, settings.CMD_FILE_READ, "file_read", commands.ReadFile)
 		break
 
 	case settings.CMD_FILE_DELETE:
-		RunCommand(conn, header, settings.CMD_FILE_DELETE, "file_delete", commands.DeleteFile)
+		runCommand(conn, header, settings.CMD_FILE_DELETE, "file_delete", commands.DeleteFile)
 		break
 
 	case settings.CMD_FILE_CREATE:
-		RunCommand(conn, header, settings.CMD_FILE_CREATE, "file_create", commands.CreateFile)
+		runCommand(conn, header, settings.CMD_FILE_CREATE, "file_create", commands.CreateFile)
 		break
 
 	case settings.CMD_FILE_COPY:
-		RunCopyCommand(conn, header, settings.CMD_FILE_COPY, "file_copy", commands.CopyFile, false)
+		runCopyCommand(conn, header, settings.CMD_FILE_COPY, "file_copy", commands.CopyFile, false)
 		break
 
 	case settings.CMD_FILE_MOVE:
-		RunCopyCommand(conn, header, settings.CMD_FILE_MOVE, "file_move", commands.CopyFile, true)
+		runCopyCommand(conn, header, settings.CMD_FILE_MOVE, "file_move", commands.CopyFile, true)
 		break
 
 	case settings.CMD_FILE_WRITE:
@@ -127,7 +127,7 @@ func HanleConnection(conn net.Conn) {
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error writing file ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, settings.CMD_FILE_WRITE+1, metadata, respBody)
+		err = sendPacket(conn, settings.CMD_FILE_WRITE+1, metadata, respBody)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -147,7 +147,7 @@ func HanleConnection(conn net.Conn) {
 				"client": conn.RemoteAddr().String(),
 			}).Warning("error reading dir ", header.Path, ": ", err.Error())
 		}
-		err = SendPacket(conn, settings.CMD_DIRECTORY_READ+1, metadata, content)
+		err = sendPacket(conn, settings.CMD_DIRECTORY_READ+1, metadata, content)
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),
@@ -156,19 +156,19 @@ func HanleConnection(conn net.Conn) {
 		break
 
 	case settings.CMD_DIRECTORY_DELETE:
-		RunCommand(conn, header, settings.CMD_DIRECTORY_DELETE, "directory_delete", commands.DeleteDirectory)
+		runCommand(conn, header, settings.CMD_DIRECTORY_DELETE, "directory_delete", commands.DeleteDirectory)
 		break
 
 	case settings.CMD_DIRECTORY_CREATE:
-		RunCommand(conn, header, settings.CMD_DIRECTORY_CREATE, "directory_create", commands.CreateDirectory)
+		runCommand(conn, header, settings.CMD_DIRECTORY_CREATE, "directory_create", commands.CreateDirectory)
 		break
 
 	case settings.CMD_DIRECTORY_COPY:
-		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_COPY, "directory_copy", commands.CopyDirectory, false)
+		runCopyCommand(conn, header, settings.CMD_DIRECTORY_COPY, "directory_copy", commands.CopyDirectory, false)
 		break
 
 	case settings.CMD_DIRECTORY_MOVE:
-		RunCopyCommand(conn, header, settings.CMD_DIRECTORY_MOVE, "directory_move", commands.CopyDirectory, true)
+		runCopyCommand(conn, header, settings.CMD_DIRECTORY_MOVE, "directory_move", commands.CopyDirectory, true)
 		break
 
 	// unknown command
@@ -180,7 +180,7 @@ func HanleConnection(conn net.Conn) {
 		metadata := utils.HeaderMetadata{}
 		metadata.ErrorCode = settings.ERROR_INVALID_COMMAND
 		metadata.ErrorMessage = "Unknown command requested"
-		err := SendPacket(conn, settings.CMD_ERROR+1, metadata, make([]byte, 0))
+		err := sendPacket(conn, settings.CMD_ERROR+1, metadata, make([]byte, 0))
 		if err != nil {
 			log.Logger.WithFields(logrus.Fields{
 				"client": conn.RemoteAddr().String(),

@@ -1,4 +1,4 @@
-package main
+package network
 
 import (
 	"crypto/sha256"
@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func SendPacket(conn net.Conn, command int, metadata utils.HeaderMetadata, body []byte) error {
+func sendPacket(conn net.Conn, command int, metadata utils.HeaderMetadata, body []byte) error {
 	// version
 	version := make([]byte, settings.VERSION_LENGTH)
 	binary.BigEndian.PutUint16(version, settings.RFAP_VERSION)
