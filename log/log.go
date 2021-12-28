@@ -10,45 +10,50 @@ import (
 
 var Logger *logrus.Logger
 
-func InitStdoutLogger() {
-	formatter := &prefixed.TextFormatter{
-		DisableColors:   false,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
+func getLogOut() *os.File {
+	if settings.Config.LogFile == "[stdout]" {
+		return os.Stdout
 	}
-	formatter.SetColorScheme(&prefixed.ColorScheme{
-		TimestampStyle: "white",
-	})
+	file, err := os.OpenFile(settings.Config.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		logrus.Fatalln("Cannot open log file")
+	}
+	return file
+}
 
-	Logger = &logrus.Logger{
-		Out:       os.Stdout,
-		Level:     settings.Config.LogLevel(),
-		Formatter: formatter,
+func getFormatter() logrus.Formatter {
+	switch settings.Config.LogFormat {
+	case "color":
+		formatter := &prefixed.TextFormatter{
+			DisableColors:   false,
+			TimestampFormat: "2006-01-02 15:04:05",
+			FullTimestamp:   true,
+			ForceFormatting: true,
+		}
+		formatter.SetColorScheme(&prefixed.ColorScheme{
+			TimestampStyle: "white",
+		})
+		return formatter
+	case "json":
+		formatter := &logrus.JSONFormatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+		}
+		return formatter
+	default:
+		formatter := &prefixed.TextFormatter{
+			DisableColors:   true,
+			TimestampFormat: "2006-01-02 15:04:05",
+			FullTimestamp:   true,
+			ForceFormatting: true,
+		}
+		return formatter
 	}
 }
 
-func InitFileLogger() {
-	formatter := &prefixed.TextFormatter{
-		DisableColors:   true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-	}
-
-	file, err := os.OpenFile(settings.Config.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-	if err != nil {
-		Logger = &logrus.Logger{
-			Out:       os.Stdout,
-			Level:     settings.Config.LogLevel(),
-			Formatter: formatter,
-		}
-		Logger.Fatal("Cannot open log file")
-	}
+func InitLogger() {
 	Logger = &logrus.Logger{
-		Out:       file,
-		Level:     logrus.DebugLevel,
-		Formatter: formatter,
+		Out:       getLogOut(),
+		Level:     settings.Config.LogLevel(),
+		Formatter: getFormatter(),
 	}
-
 }

@@ -15,9 +15,10 @@ type ServerConfiguration struct {
 	MaxClientsPerCore int
 
 	PublicFolder string
-	LogFile      string
 
+	LogFile     string
 	LogLevelStr string
+	LogFormat   string
 }
 
 func (config *ServerConfiguration) MaxClients() int {
@@ -49,9 +50,10 @@ func (config *ServerConfiguration) LoadDefaultConfig() {
 	config.MaxClientsPerCore = 4
 
 	config.PublicFolder = getPublicFolder()
-	config.LogFile = getLogFile()
 
+	config.LogFile = getLogFile()
 	config.LogLevelStr = "info"
+	config.LogFormat = "default"
 }
 
 func (config *ServerConfiguration) ApplyEnvConfig() {
@@ -65,12 +67,15 @@ func (config *ServerConfiguration) ApplyEnvConfig() {
 	if publicFolder := os.Getenv("RFAP_PUBLIC_FOLDER"); publicFolder != "" {
 		config.PublicFolder = publicFolder
 	}
+
 	if logFile := os.Getenv("RFAP_LOG_FILE"); logFile != "" {
 		config.LogFile = logFile
 	}
-
 	if logLevel := os.Getenv("RFAP_LOG_LEVEL"); logLevel != "" {
 		config.LogLevelStr = logLevel
+	}
+	if logFormat := os.Getenv("RFAP_LOG_FORMAT"); logFormat != "" {
+		config.LogFormat = logFormat
 	}
 }
 

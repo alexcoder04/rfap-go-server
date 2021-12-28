@@ -12,11 +12,7 @@ func Init() {
 	settings.Config.LoadDefaultConfig()
 	settings.Config.ApplyEnvConfig()
 
-	if settings.Config.LogFile == "[stdout]" {
-		log.InitStdoutLogger()
-	} else {
-		log.InitFileLogger()
-	}
+	log.InitLogger()
 
 	log.Logger.WithFields(logrus.Fields{
 		"commit":     settings.GIT_COMMIT,

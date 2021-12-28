@@ -8,17 +8,17 @@ GIT_COMMIT = $(shell git rev-list -1 HEAD)
 VERSION = $(shell git describe --tags --abbrev=0)
 BUILD_OS = $(shell uname -orm | tr "[:blank:]" "_")
 
-LDFLAGS = "-X main.BUILD_TIMESTAMP=$(BUILD_TIMESTAMP) -X main.GIT_COMMIT=$(GIT_COMMIT) -X main.SERVER_VERSION=$(VERSION) -X main.BUILD_OS=$(BUILD_OS)"
+LDFLAGS = "-X github.com/alexcoder04/rfap-go-server/settings.BUILD_TIMESTAMP=$(BUILD_TIMESTAMP) -X github.com/alexcoder04/rfap-go-server/settings.GIT_COMMIT=$(GIT_COMMIT) -X github.com/alexcoder04/rfap-go-server/settings.SERVER_VERSION=$(VERSION) -X github.com/alexcoder04/rfap-go-server/settings.BUILD_OS=$(BUILD_OS)"
 
 linux:
 	GOOS=linux GOARCH=amd64\
 		 go build -ldflags $(LDFLAGS)\
-		 -o $(LINUX_OUT)
+		 -o $(LINUX_OUT) .
 
 windows:
 	GOOS=windows GOARCH=amd64\
 		 go build -ldflags $(LDFLAGS)\
-		 -o $(WINDOWS_OUT)
+		 -o $(WINDOWS_OUT) .
 
 run:
 	RFAP_LOG_FILE=[stdout] RFAP_LOG_LEVEL=trace\
