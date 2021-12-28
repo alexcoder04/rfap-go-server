@@ -9,9 +9,19 @@ import (
 )
 
 func getPublicFolder() string {
-	return filepath.Abs("./shared")
+	path, err := filepath.Abs("./shared")
+	if err != nil {
+		fmt.Println("cannot resolve ./shared")
+		os.Exit(1)
+	}
+	return path
 }
 
 func getLogFile() string {
-	return filepath.Abs(fmt.Sprintf("./rfap-go-server-%d.log", od.Getpid()))
+	path, err := filepath.Abs(fmt.Sprintf("./rfap-go-server-%d.log", os.Getpid()))
+	if err != nil {
+		fmt.Println("cannot resolve ./shared")
+		os.Exit(1)
+	}
+	return path
 }
