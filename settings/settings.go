@@ -12,7 +12,8 @@ type ServerConfiguration struct {
 	ConnPort string
 	ConnType string
 
-	MaxClientsPerCore int
+	MaxClientsPerCore    int
+	SecsWaitIfMaxThreads int
 
 	PublicFolder string
 
@@ -48,6 +49,7 @@ func (config *ServerConfiguration) LoadDefaultConfig() {
 	config.ConnType = "tcp"
 
 	config.MaxClientsPerCore = 4
+	config.SecsWaitIfMaxThreads = 5
 
 	config.PublicFolder = getPublicFolder()
 

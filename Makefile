@@ -1,6 +1,5 @@
 
 LINUX_OUT = build/rfap-go-server_linux_amd64
-RASPBERRY_OUT = build/rfap-go-server_linux_arm
 WINDOWS_OUT = build/rfap-go-server_windows_amd64.exe
 
 BUILD_TIMESTAMP = $(shell date --utc "+%Y.%m.%d-%H:%M:%S")
@@ -21,7 +20,7 @@ windows:
 		 -o $(WINDOWS_OUT) .
 
 run:
-	RFAP_LOG_FILE=[stdout] RFAP_LOG_LEVEL=trace\
+	RFAP_LOG_FILE=[stdout] RFAP_LOG_FORMAT=color RFAP_LOG_LEVEL=trace\
 		go run -ldflags $(LDFLAGS) .
 
 run-quiet:
@@ -32,5 +31,5 @@ install:
 	go install -ldflags $(LDFLAGS) .
 
 clean:
-	rm -f $(LINUX_OUT) $(RASPBERRY_OUT) $(WINDOWS_OUT)
+	rm -f $(LINUX_OUT) $(WINDOWS_OUT)
 

@@ -13,7 +13,12 @@ import (
 
 func main() {
 	Init()
-	log.Logger.Info("Starting " + settings.Config.ConnType + " server on " + settings.Config.ConnHost + ":" + settings.Config.ConnPort + " sharing " + settings.Config.PublicFolder + "...")
+
+	log.Logger.WithFields(logrus.Fields{
+		"host":          settings.Config.ConnHost,
+		"port":          settings.Config.ConnPort,
+		"shared folder": settings.Config.PublicFolder,
+	}).Info("Starting  server ...")
 
 	l, err := net.Listen(settings.Config.ConnType, settings.Config.ConnHost+":"+settings.Config.ConnPort)
 	if err != nil {
@@ -26,7 +31,7 @@ func main() {
 		// wait and don't accept new connections if max number of clients already connected
 		if runtime.NumGoroutine() >= settings.Config.MaxClients() {
 			log.Logger.Warning("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients)
-			time.Sleep(settings.MAX_THREADS_WAIT_SECS * time.Second)
+			time.Sleep(time.Duration(settings.Config.SecsWaitIfMaxThreads) * time.Second)
 			continue
 		}
 
