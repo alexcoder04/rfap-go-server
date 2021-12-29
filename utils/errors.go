@@ -33,7 +33,7 @@ func (e *ErrClientCrashed) Error() string {
 type ErrAccessDenied struct{}
 
 func (e *ErrAccessDenied) Error() string {
-	return "Data in different packets doesn't match"
+	return "Access denied"
 }
 
 type ErrInvalidContentLength struct{}

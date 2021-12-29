@@ -18,7 +18,7 @@ func main() {
 		"host":          settings.Config.ConnHost,
 		"port":          settings.Config.ConnPort,
 		"shared folder": settings.Config.PublicFolder,
-	}).Info("Starting  server ...")
+	}).Info("Starting server...")
 
 	l, err := net.Listen(settings.Config.ConnType, settings.Config.ConnHost+":"+settings.Config.ConnPort)
 	if err != nil {

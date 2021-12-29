@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func sendPacket(conn net.Conn, command int, metadata utils.HeaderMetadata, body []byte) error {
+func sendPacket(conn net.Conn, command uint32, metadata utils.HeaderMetadata, body []byte) error {
 	// version
 	version := make([]byte, settings.VERSION_LENGTH)
 	binary.BigEndian.PutUint16(version, settings.RFAP_VERSION)

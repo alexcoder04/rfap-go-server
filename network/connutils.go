@@ -25,7 +25,7 @@ func cleanErrorDisconnect(conn net.Conn) {
 	log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients())
 }
 
-func runCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName string, fn utils.CommandExec) {
+func runCommand(conn net.Conn, header utils.HeaderMetadata, cmd uint32, commandName string, fn utils.CommandExec) {
 	log.Logger.WithFields(logrus.Fields{
 		"client":  conn.RemoteAddr().String(),
 		"command": commandName,
@@ -44,7 +44,7 @@ func runCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName
 	}
 }
 
-func runCopyCommand(conn net.Conn, header utils.HeaderMetadata, cmd int, commandName string, fn utils.CopySommandExec, move bool) {
+func runCopyCommand(conn net.Conn, header utils.HeaderMetadata, cmd uint32, commandName string, fn utils.CopySommandExec, move bool) {
 	log.Logger.WithFields(logrus.Fields{
 		"client":  conn.RemoteAddr().String(),
 		"command": commandName,
