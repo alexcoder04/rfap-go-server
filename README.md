@@ -10,6 +10,8 @@
 [![GitHub contributors](https://img.shields.io/github/contributors-anon/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/graphs/contributors)
 
 The reference server implementation of the rfap protocol, written in GO.
+It shares a local folder, which can be then accessed over the network using an
+rfap client.
 
 See [here](#related-projects) for protocol specifications and related projects.
 
@@ -26,12 +28,14 @@ Make sure you have `git`, `make` and `go` installed.
 
 ```sh
 git clone https://github.com/alexcoder04/rfap-go-server
-cd rfap-go-server/src
+cd rfap-go-server
 
-make run     # start testing server
-make linux   # compile linux executable
-make windows # compile windows executable
-make install # compile and install executable to $GOPATH/bin
+make run       # start testing server
+make linux     # compile linux executable
+make windows   # compile windows executable
+make raspberry # compile linux arm executable
+make mac-intel # compile mac intel executable
+make install   # compile and install executable to $GOPATH/bin
 ```
 
 Please use `make` to compile the server, because it tells `go` to inject build
@@ -40,7 +44,13 @@ information into the executable which is then useful for understanding logs.
 ## Related projects
 
  - https://github.com/alexcoder04/rfap - general protocol specification
- - https://github.com/alexcoder04/librfap - Python library
- - https://github.com/BoettcherDasOriginal/rfap-cs-lib - C# library
+ - https://github.com/alexcoder04/librfap - Python client library
+ - https://github.com/BoettcherDasOriginal/rfap-cs-lib - C# client library
  - https://github.com/alexcoder04/rfap-pycli - Python CLI client based on librfap
+ - https://github.com/alexcoder04/rfap-fuse - FUSE filesystem based on librfap
+
+## Contributing
+
+We appreciate any kind of contribution! Check out
+[CONTRIBUTING.md](./CONTRIBUTING.md) for more info.
 
