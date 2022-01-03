@@ -1,5 +1,11 @@
 package utils
 
+import (
+	"net"
+
+	"golang.org/x/crypto/openpgp"
+)
+
 type HeaderMetadata struct {
 	ErrorCode    int    `yaml:"ErrorCode"`
 	ErrorMessage string `yaml:"ErrorMessage"`
@@ -16,6 +22,12 @@ type HeaderMetadata struct {
 
 	DirectorySize  int `yaml:"DirectorySize"`
 	ElementsNumber int `yaml:"ElementsNumber"`
+}
+
+type Client struct {
+	Conn         net.Conn
+	PubkeyEntity *openpgp.Entity
+	Address      string
 }
 
 type CommandExec func(string) (HeaderMetadata, []byte, error)

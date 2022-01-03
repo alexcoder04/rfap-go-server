@@ -25,6 +25,27 @@ func cleanErrorDisconnect(conn net.Conn) {
 	log.Logger.Info("running threads: ", runtime.NumGoroutine(), "/", settings.Config.MaxClients())
 }
 
+func errRecvPacket(conn net.Conn, err error, version uint32) {
+	if _, ok := err.(*utils.ErrUnsupportedRfapVersion); ok {
+		log.Logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("rfap version ", version, " unsupported ")
+		cleanErrorDisconnect(conn)
+		return
+	}
+	if _, ok := err.(*utils.ErrClientCrashed); ok {
+		log.Logger.WithFields(logrus.Fields{
+			"client": conn.RemoteAddr().String(),
+		}).Error("client crashed")
+		cleanErrorDisconnect(conn)
+		return
+	}
+	log.Logger.WithFields(logrus.Fields{
+		"client": conn.RemoteAddr().String(),
+	}).Error("error recieving packet: ", err.Error())
+	cleanErrorDisconnect(conn)
+}
+
 func runCommand(conn net.Conn, header utils.HeaderMetadata, cmd uint32, commandName string, fn utils.CommandExec) {
 	log.Logger.WithFields(logrus.Fields{
 		"client":  conn.RemoteAddr().String(),

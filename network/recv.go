@@ -15,14 +15,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, error) {
+func recvPacket(client utils.Client) (uint32, uint32, utils.HeaderMetadata, []byte, error) {
 	// version
 	versionBytes := make([]byte, settings.VERSION_LENGTH)
-	err := conn.SetReadDeadline(time.Now().Add(settings.CONN_RECV_TIMEOUT_SECS * time.Second))
+	err := client.Conn.SetReadDeadline(time.Now().Add(settings.CONN_RECV_TIMEOUT_SECS * time.Second))
 	if err != nil {
 		return 0, 0, utils.HeaderMetadata{}, make([]byte, 0), &utils.ErrSetReadTimeoutFailed{}
 	}
-	_, err = conn.Read(versionBytes[:])
+	_, err = client.Conn.Read(versionBytes[:])
 	if err != nil {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return 0, 0, utils.HeaderMetadata{}, make([]byte, 0), &utils.ErrClientCrashed{}
@@ -37,7 +37,7 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 
 	// header length
 	headerLengthBytes := make([]byte, settings.CONT_LEN_INDIC_LENGTH)
-	_, err = conn.Read(headerLengthBytes[:])
+	_, err = client.Conn.Read(headerLengthBytes[:])
 	if err != nil {
 		return version, 0, utils.HeaderMetadata{}, make([]byte, 0), err
 	}
@@ -49,7 +49,7 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 
 	// raw header
 	headerRaw := make([]byte, headerLength)
-	_, err = conn.Read(headerRaw[:])
+	_, err = client.Conn.Read(headerRaw[:])
 	if err != nil {
 		return version, 0, utils.HeaderMetadata{}, make([]byte, 0), err
 	}
@@ -73,7 +73,7 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 
 	// body length
 	bodyLengthBytes := make([]byte, settings.CONT_LEN_INDIC_LENGTH)
-	_, err = conn.Read(bodyLengthBytes[:])
+	_, err = client.Conn.Read(bodyLengthBytes[:])
 	if err != nil {
 		return version, 0, utils.HeaderMetadata{}, make([]byte, 0), err
 	}
@@ -82,7 +82,7 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 
 	bodyRaw := make([]byte, bodyLength)
 	// TODO recv in loop, body_length may be very big
-	_, err = conn.Read(bodyRaw[:])
+	_, err = client.Conn.Read(bodyRaw[:])
 	if err != nil {
 		return version, 0, utils.HeaderMetadata{}, make([]byte, 0), err
 	}
@@ -91,10 +91,10 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 	bodyChecksumExpected := sha256.Sum256(body)
 	if !bytes.Equal(bodyChecksum, bodyChecksumExpected[:]) {
 		log.Logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client": client.Address,
 		}).Debug("body checksum: ", hex.EncodeToString(bodyChecksum))
 		log.Logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client": client.Address,
 		}).Debug("body checksum expected: ", hex.EncodeToString(bodyChecksumExpected[:]))
 		return version, 0, utils.HeaderMetadata{}, make([]byte, 0), &utils.ErrChecksumsNotMatching{}
 	}
@@ -104,7 +104,7 @@ func recvPacket(conn net.Conn) (uint32, uint32, utils.HeaderMetadata, []byte, er
 	err = yaml.Unmarshal(headerRaw[4:len(headerRaw)-32], &header)
 	if err != nil {
 		log.Logger.WithFields(logrus.Fields{
-			"client": conn.RemoteAddr().String(),
+			"client": client.Address,
 		}).Error("error decoding metadata")
 		return version, command, utils.HeaderMetadata{}, body, err
 	}

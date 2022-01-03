@@ -20,6 +20,10 @@ type ServerConfiguration struct {
 	LogFile     string
 	LogLevelStr string
 	LogFormat   string
+
+	PublicKeyFile       string
+	PrivateKeyFile      string
+	ClientPublicKeyFile string // TODO only temporary
 }
 
 func (config *ServerConfiguration) MaxClients() int {
@@ -56,6 +60,10 @@ func (config *ServerConfiguration) LoadDefaultConfig() {
 	config.LogFile = getLogFile()
 	config.LogLevelStr = "info"
 	config.LogFormat = "default"
+
+	config.PublicKeyFile = "/etc/rfap/keys/public.key"
+	config.PrivateKeyFile = "/etc/rfap/keys/private.key"
+	config.ClientPublicKeyFile = "/home/alex/.config/rfap-pycli/public.key" // TODO only temporary
 }
 
 func (config *ServerConfiguration) ApplyEnvConfig() {
