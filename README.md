@@ -1,4 +1,12 @@
 
+# Archivation Note
+
+As of now, I lost interest on this project and shifted focus to other things. That's why I have to archive rfap-go-server. If you are interested in continuing this project, please email me, so I can explain some details to you or unarchive this repo and add you as contributor.
+
+Maybe I'll work on a new version of rfap with TLS encryption, but that's not sure for now.
+
+---
+
 # rfap-go-server
 
 [![GitHub release](https://img.shields.io/github/v/release/alexcoder04/rfap-go-server?include_prereleases)](https://github.com/alexcoder04/rfap-go-server/releases/latest)
@@ -9,7 +17,7 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/commits/main)
 [![GitHub contributors](https://img.shields.io/github/contributors-anon/alexcoder04/rfap-go-server)](https://github.com/alexcoder04/rfap-go-server/graphs/contributors)
 
-The reference server implementation of the rfap protocol, written in GO.
+The reference server implementation of the rfap protocol, written in Go.
 It shares a local folder, which can be then accessed over the network using an
 rfap client.
 
